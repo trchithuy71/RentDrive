@@ -1,0 +1,55 @@
+import { NextRequest, NextResponse } from 'next/server';
+import { db } from '@/lib/supabase';
+
+export async function GET(req: NextRequest) {
+  try {
+    const list = await db.getRentals();
+    return NextResponse.json({ success: true, rentals: list });
+  } catch (error: any) {
+    return NextResponse.json({ error: error.message || 'Server error' }, { status: 500 });
+  }
+}
+
+export async function POST(req: NextRequest) {
+  try {
+    const body = await req.json();
+    const { vehicleId, renter, startOdometer } = body;
+
+    if (!vehicleId || !renter) {
+      return NextResponse.json({ error: 'Missing required parameters' }, { status: 400 });
+    }
+
+    // 1. Fetch vehicle configuration
+    const vehicles = await db.getVehicles();
+    const vehicle = vehicles.find((v: any) => v.id === Number(vehicleId));
+    if (!vehicle) {
+      return NextResponse.json({ error: 'Vehicle not found' }, { status: 404 });
+    }
+
+    // 2. Register profile if not exists
+    let renterProfile = await db.getUser(renter);
+    if (!renterProfile) {
+      await db.createUser({
+        address: renter,
+        name: 'Bob Renter',
+        role: 'renter',
+      });
+    }
+
+    // 3. Create Rental record
+    const newRental = await db.createRental({
+      vehicle_id: Number(vehicleId),
+      renter: renter.toLowerCase(),
+      start_time: new Date().toISOString(),
+      start_odometer: Number(startOdometer || 0),
+      current_odometer: Number(startOdometer || 0),
+      escrow_balance: Number(vehicle.deposit_required),
+      status: 'Active',
+    });
+
+    return NextResponse.json({ success: true, rental: newRental });
+  } catch (error: any) {
+    console.error('Start rental route error:', error);
+    return NextResponse.json({ error: error.message || 'Server error' }, { status: 500 });
+  }
+}

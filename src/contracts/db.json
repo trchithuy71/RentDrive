@@ -1,0 +1,56 @@
+{
+  "users": [
+    {
+      "address": "0xF1Ef4c6c486614b3455D583cCaAFcC8d694847a1",
+      "name": "RentDrive Admin",
+      "role": "admin",
+      "created_at": "2026-05-29T04:57:39.793Z"
+    },
+    {
+      "address": "0xaB1C2d3e4F5g6H7i8J9k0L1m2N3o4P5q6R7s8T9u",
+      "name": "Alice Car Owner",
+      "role": "owner",
+      "created_at": "2026-05-29T04:57:39.793Z"
+    },
+    {
+      "address": "0x1A2b3C4d5E6f7G8h9I0j1K2l3M4n5O6p7Q8r9S0t",
+      "name": "Bob Renter",
+      "role": "renter",
+      "created_at": "2026-05-29T04:57:39.793Z"
+    }
+  ],
+  "vehicles": [
+    {
+      "id": 1,
+      "contract_id": 1,
+      "owner": "0xaB1C2d3e4F5g6H7i8J9k0L1m2N3o4P5q6R7s8T9u",
+      "plate_number": "29A-888.88",
+      "model": "Tesla Model Y Performance (2024)",
+      "image_url": "https://images.unsplash.com/photo-1619767886558-efdc259cde1a?auto=format&fit=crop&q=80&w=600",
+      "base_rate_per_hour": 5,
+      "rate_per_km": 0.5,
+      "speed_limit_kmh": 100,
+      "speed_penalty_usdc": 50,
+      "deposit_required": 200,
+      "is_active": true,
+      "created_at": "2026-05-29T04:57:39.793Z"
+    },
+    {
+      "id": 2,
+      "contract_id": 2,
+      "owner": "0xaB1C2d3e4F5g6H7i8J9k0L1m2N3o4P5q6R7s8T9u",
+      "plate_number": "30K-999.99",
+      "model": "Ducati Panigale V4 S (2025)",
+      "image_url": "https://images.unsplash.com/photo-1568772585407-9361f9bf3a87?auto=format&fit=crop&q=80&w=600",
+      "base_rate_per_hour": 8,
+      "rate_per_km": 0.8,
+      "speed_limit_kmh": 120,
+      "speed_penalty_usdc": 80,
+      "deposit_required": 300,
+      "is_active": true,
+      "created_at": "2026-05-29T04:57:39.793Z"
+    }
+  ],
+  "rentals": [],
+  "telemetry_logs": []
+}
