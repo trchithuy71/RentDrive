@@ -47,6 +47,10 @@ export async function POST(req: NextRequest) {
       status: 'Active',
     });
 
+    // 4. Initialize Circle Gateway escrow balance for micro-billing
+    const { gateway } = require('@/lib/gateway');
+    await gateway.initializeBalance(newRental.id, Number(vehicle.deposit_required));
+
     return NextResponse.json({ success: true, rental: newRental });
   } catch (error: any) {
     console.error('Start rental route error:', error);
