@@ -1,10 +1,182 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { useAccount, useWriteContract, usePublicClient } from 'wagmi';
-import { Address } from 'viem';
-import { Clock, ShieldCheck, ShieldAlert, BadgeAlert, RefreshCw } from 'lucide-react';
+import { useAccount, usePublicClient, useReadContract } from 'wagmi';
+import { Address, formatUnits } from 'viem';
+import { Clock, ShieldCheck, ShieldAlert, BadgeAlert, RefreshCw, Zap } from 'lucide-react';
 import { useModal, TransactionStep } from '@/contexts/ModalContext';
+import { useCircleApp } from '@/contexts/CircleAppContext';
+import { useGaslessWriteContract } from '@/hooks/useGaslessWriteContract';
+import ReviewModal from './ReviewModal';
+import StarRating from './StarRating';
+import { useNotifications } from '@/contexts/NotificationContext';
+import PullToRefresh from './PullToRefresh';
+
+const STATUS_MAP = ['Requested', 'Active', 'Completed', 'Disputed', 'Resolved'];
+
+interface ActiveRentalCardProps {
+  rental: Rental;
+  vehicle: Vehicle | undefined;
+  contractAddress: Address;
+  abi: any;
+  endingId: number | null;
+  handleEndRental: (rental: Rental) => void;
+}
+
+function ActiveRentalCard({
+  rental,
+  vehicle,
+  contractAddress,
+  abi,
+  endingId,
+  handleEndRental,
+}: ActiveRentalCardProps) {
+  const { gaslessEnabled } = useCircleApp();
+  const { data: onChainRental } = useReadContract({
+    address: contractAddress,
+    abi,
+    functionName: 'getRental',
+    args: [BigInt(rental.contract_id)],
+    query: { enabled: !!contractAddress && !!rental.contract_id },
+  });
+
+  const escrowVal = onChainRental ? (onChainRental as any)[5] : undefined;
+  const speedPenaltiesVal = onChainRental ? (onChainRental as any)[6] : undefined;
+  const distanceChargesVal = onChainRental ? (onChainRental as any)[7] : undefined;
+  const statusVal = onChainRental ? (onChainRental as any)[8] : undefined;
+  const crashDetectedVal = onChainRental ? (onChainRental as any)[9] : undefined;
+  const geofencePenaltiesVal = onChainRental ? (onChainRental as any)[10] : undefined;
+
+  const displayEscrow = escrowVal !== undefined 
+    ? Number(formatUnits(escrowVal as bigint, 6)).toFixed(2) 
+    : Number(rental.escrow_balance).toFixed(2);
+
+  const displaySpeedPenalties = speedPenaltiesVal !== undefined 
+    ? Number(formatUnits(speedPenaltiesVal as bigint, 6)).toFixed(2) 
+    : Number(rental.speed_penalties_accrued).toFixed(2);
+
+  const displayDistanceCharges = distanceChargesVal !== undefined 
+    ? Number(formatUnits(distanceChargesVal as bigint, 6)).toFixed(2) 
+    : Number(rental.distance_charges_accrued).toFixed(2);
+
+  const displayGeofencePenalties = geofencePenaltiesVal !== undefined
+    ? Number(formatUnits(geofencePenaltiesVal as bigint, 6)).toFixed(2)
+    : Number(rental.geofence_penalties_accrued || 0).toFixed(2);
+
+  const totalCost = (Number(displayDistanceCharges) + Number(displaySpeedPenalties) + Number(displayGeofencePenalties)).toFixed(2);
+  const displayStatus = statusVal !== undefined ? STATUS_MAP[statusVal as number] : rental.status;
+  const isCrashDetected = crashDetectedVal !== undefined ? (crashDetectedVal as boolean) : rental.crash_detected;
+  const isDisputed = displayStatus === 'Disputed' || isCrashDetected;
+
+  return (
+    <div
+      className={`relative rounded-sm border bg-white p-6 transition-all duration-300 ${
+        isDisputed ? 'border-red-400' : 'border-[#E0DDD5]'
+      }`}
+    >
+      <div className="flex justify-between items-start mb-6">
+        <div>
+          <span className={`inline-flex items-center rounded-sm px-2.5 py-1 text-[9px] font-bold tracking-widest uppercase border ${
+            isDisputed 
+              ? 'bg-red-50 text-red-700 border-red-200' 
+              : 'bg-[#1C2B3C] text-white border-[#1C2B3C]'
+          }`}>
+            On-Chain: {displayStatus} (DB: {rental.status})
+          </span>
+          <h4 className="text-lg font-black text-[#1C2B3C] mt-3 uppercase tracking-wide">
+            {vehicle?.model || 'Leased Vehicle'}
+          </h4>
+          <span className="text-[10px] text-[#5A6573] font-mono tracking-wider font-bold">
+            Live Odometer: {(rental.current_odometer / 1000).toFixed(2)} km
+          </span>
+        </div>
+        <div className="text-right">
+          <span className="block text-[8px] text-[#718096] uppercase tracking-widest font-extrabold mb-1">Locked Escrow</span>
+          <span className="text-xl font-black text-[#1C2B3C] tracking-tight">
+            {displayEscrow} USDC
+          </span>
+        </div>
+      </div>
+
+      {/* Escrow Details with refined minimalist styling */}
+      <div className="grid grid-cols-4 gap-4 my-5 py-4 border-y border-[#F2F1EC] text-center text-[10px]">
+        <div>
+          <span className="block text-[#718096] font-bold text-[9px] tracking-wider uppercase mb-1">Distance Fee</span>
+          <span className="text-[#1C2B3C] font-extrabold">{displayDistanceCharges} USDC</span>
+        </div>
+        <div>
+          <span className="block text-[#718096] font-bold text-[9px] tracking-wider uppercase mb-1">Speed Pen.</span>
+          <span className="text-[#3E5062] font-extrabold">{displaySpeedPenalties} USDC</span>
+        </div>
+        <div>
+          <span className="block text-[#718096] font-bold text-[9px] tracking-wider uppercase mb-1">Geofence Pen.</span>
+          <span className="text-red-700 font-extrabold">{displayGeofencePenalties} USDC</span>
+        </div>
+        <div>
+          <span className="block text-[#718096] font-bold text-[9px] tracking-wider uppercase mb-1">Total Cost</span>
+          <span className="text-[#1C2B3C] font-black">
+            {totalCost} USDC
+          </span>
+        </div>
+      </div>
+
+      {isDisputed && (
+        <div className="mb-5 flex items-start gap-2.5 rounded-sm bg-red-50 border border-red-200 p-4 text-red-800 text-xs leading-relaxed font-semibold">
+          <ShieldAlert className="h-4.5 w-4.5 shrink-0 text-red-600" />
+          <div>
+            <span className="font-extrabold block uppercase tracking-wider text-red-900 mb-0.5">COLLISION EVENT LOGGED</span>
+            Telemetry reported severe impact force or escrow is locked in disputed state pending adjuster settlement.
+          </div>
+        </div>
+      )}
+
+      {rental.gateway_deposit !== undefined && Number(rental.gateway_deposit) > 0 && (
+        <div className="mb-5 bg-[#F2F1EC]/60 border border-[#DDDCD4] rounded-sm p-4 text-[10px] space-y-2 text-[#1C2B3C]">
+          <div className="flex justify-between items-center pb-1 border-b border-[#E0DDD5]">
+            <span className="font-extrabold uppercase tracking-wider text-[#718096]">Circle Gateway Escrow</span>
+            <span className="bg-[#1C2B3C] text-white text-[8px] font-mono px-2 py-0.5 rounded-sm uppercase font-extrabold tracking-wider">
+              Nanopayments Engaged
+            </span>
+          </div>
+          <div className="flex justify-between">
+            <span className="text-[#718096] uppercase font-bold">Renter Balance:</span>
+            <span className="font-extrabold">{Number(rental.gateway_deposit).toFixed(4)} USDC</span>
+          </div>
+          <div className="flex justify-between">
+            <span className="text-[#718096] uppercase font-bold">Streamed Micro-Charges:</span>
+            <span className="font-extrabold text-[#1C2B3C] font-mono">{Number(rental.nanopayments_accumulated || 0).toFixed(6)} USDC</span>
+          </div>
+          {rental.gas_saved_usdc !== undefined && Number(rental.gas_saved_usdc) > 0 && (
+            <div className="flex justify-between text-emerald-700 border-t border-[#E0DDD5]/45 pt-1.5 font-bold">
+              <span className="uppercase text-[9px]">Gas Saved via Off-Chain Stream:</span>
+              <span>{Number(rental.gas_saved_usdc).toFixed(4)} USDC Saved</span>
+            </div>
+          )}
+        </div>
+      )}
+
+      {!isDisputed && (
+        <div className="mb-5 flex items-center gap-2 rounded-sm bg-[#F2F1EC] border border-[#DDDCD4] p-3.5 text-[#3E5062] text-[10px] font-bold uppercase tracking-wider">
+          <ShieldCheck className="h-4 w-4 shrink-0 text-[#1C2B3C]" />
+          <span>OBD-II hardware online: speed & coordinates active</span>
+        </div>
+      )}
+
+      <button
+        onClick={() => handleEndRental(rental)}
+        disabled={endingId !== null || isDisputed}
+        className={`w-full py-3.5 rounded-sm font-bold text-[11px] tracking-widest uppercase transition-all duration-300 border flex items-center justify-center gap-1.5 ${
+          isDisputed
+            ? 'bg-[#EAE8E1] text-[#A0AEC0] border-[#DDDCD4] cursor-not-allowed'
+            : 'bg-[#1C2B3C] text-white hover:bg-red-700 hover:border-red-700 hover:text-white border-[#1C2B3C]'
+        }`}
+      >
+        {gaslessEnabled && !isDisputed && <Zap className="h-3.5 w-3.5 fill-current text-emerald-400" />}
+        {endingId === rental.id ? 'PROCESSING SETTLEMENT...' : (gaslessEnabled && !isDisputed) ? 'CLOSE LEASE (GASLESS)' : 'CLOSE LEASE & REFUND ESCROW'}
+      </button>
+    </div>
+  );
+}
 
 interface Rental {
   id: number;
@@ -18,8 +190,12 @@ interface Rental {
   escrow_balance: number;
   speed_penalties_accrued: number;
   distance_charges_accrued: number;
+  geofence_penalties_accrued?: number;
   status: string;
   crash_detected: boolean;
+  gateway_deposit?: number;
+  nanopayments_accumulated?: number;
+  gas_saved_usdc?: number;
 }
 
 interface Vehicle {
@@ -43,10 +219,15 @@ export default function MyRentals({ activeTab }: MyRentalsProps) {
   const [endingId, setEndingId] = useState<number | null>(null);
 
   const { showModal, updateModal, hideModal } = useModal();
+  const [selectedReviewRental, setSelectedReviewRental] = useState<Rental | null>(null);
+  const [reviewedRentalIds, setReviewedRentalIds] = useState<Set<number>>(new Set());
 
   const contractAddress = process.env.NEXT_PUBLIC_RENTDRIVE_CONTRACT_ADDRESS as Address;
-  const { writeContractAsync } = useWriteContract();
+  const { gaslessEnabled } = useCircleApp();
+  const { writeContractAsync } = useGaslessWriteContract();
   const publicClient = usePublicClient();
+
+  const { subscribeToEvent } = useNotifications();
 
   useEffect(() => {
     if (isConnected && address) {
@@ -54,14 +235,33 @@ export default function MyRentals({ activeTab }: MyRentalsProps) {
     }
   }, [isConnected, address, activeTab]);
 
+  useEffect(() => {
+    if (!isConnected || !address) return;
+
+    const unsubscribes = [
+      subscribeToEvent('rental-started', fetchData),
+      subscribeToEvent('telemetry-updated', fetchData),
+      subscribeToEvent('rental-completed', fetchData),
+      subscribeToEvent('crash-detected', fetchData),
+      subscribeToEvent('speed-penalty', fetchData),
+      subscribeToEvent('geofence-penalty', fetchData),
+    ];
+
+    return () => {
+      unsubscribes.forEach((unsub) => unsub());
+    };
+  }, [isConnected, address, subscribeToEvent]);
+
   const fetchData = async () => {
     try {
-      const [rentalsRes, vehiclesRes] = await Promise.all([
+      const [rentalsRes, vehiclesRes, reviewsRes] = await Promise.all([
         fetch('/api/rentals'),
         fetch('/api/vehicles'),
+        fetch('/api/reviews'),
       ]);
       const rentalsData = await rentalsRes.json();
       const vehiclesData = await vehiclesRes.json();
+      const reviewsData = await reviewsRes.json();
 
       if (rentalsData.success && vehiclesData.success) {
         const userRentals = rentalsData.rentals.filter(
@@ -69,6 +269,13 @@ export default function MyRentals({ activeTab }: MyRentalsProps) {
         );
         setRentals(userRentals);
         setVehicles(vehiclesData.vehicles);
+
+        if (reviewsData.success && address) {
+          const userReviewed = reviewsData.reviews
+            .filter((rev: any) => rev.reviewer.toLowerCase() === address.toLowerCase())
+            .map((rev: any) => rev.rental_id);
+          setReviewedRentalIds(new Set(userReviewed));
+        }
       }
     } catch (e) {
       console.error('Error fetching rentals:', e);
@@ -93,6 +300,18 @@ export default function MyRentals({ activeTab }: MyRentalsProps) {
     });
 
     try {
+      // Reconcile outstanding off-chain nanopayments with on-chain escrow
+      try {
+        console.log(`[Circle Gateway] Reconciling outstanding nanopayments on-chain for lease #${rental.id}...`);
+        await fetch('/api/nanopay', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ action: 'settle', rentalId: rental.id }),
+        });
+      } catch (npErr) {
+        console.warn('Nanopayment reconciliation skipped or failed:', npErr);
+      }
+
       const isContractActive = !!contractAddress && contractAddress.startsWith('0x');
 
       if (isContractActive) {
@@ -104,7 +323,7 @@ export default function MyRentals({ activeTab }: MyRentalsProps) {
           abi: rentDriveArtifact.abi,
           functionName: 'endRental',
           args: [BigInt(rental.contract_id)],
-        });
+        }, { txName: 'End Rental & Settle' });
         
         console.log('End Rental Tx Hash:', txHash);
         updateModal({
@@ -134,8 +353,16 @@ export default function MyRentals({ activeTab }: MyRentalsProps) {
           txSteps: [...steps],
           preventClose: false,
           primaryAction: {
+            label: 'WRITE REVIEW NOW',
+            onClick: () => {
+              hideModal();
+              setSelectedReviewRental(rental);
+            },
+          },
+          secondaryAction: {
             label: 'DISMISS',
             onClick: () => {
+              hideModal();
               fetchData();
             },
           },
@@ -199,7 +426,8 @@ export default function MyRentals({ activeTab }: MyRentalsProps) {
   const pastRentals = rentals.filter((r) => r.status === 'Completed' || r.status === 'Resolved');
 
   return (
-    <div className="mx-auto max-w-7xl px-6 py-10">
+    <PullToRefresh onRefresh={async () => { await fetchData(); }}>
+      <div className="mx-auto max-w-7xl px-6 py-10">
       <div className="flex items-center justify-between mb-8 pb-3 border-b border-[#E0DDD5]">
         <h2 className="text-sm font-bold uppercase tracking-widest text-[#1C2B3C] flex items-center gap-2.5">
           <Clock className="h-4 w-4 text-[#1C2B3C]" />
@@ -228,85 +456,17 @@ export default function MyRentals({ activeTab }: MyRentalsProps) {
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
                 {activeRentals.map((rental) => {
                   const vehicle = vehicles.find((v) => v.id === rental.vehicle_id);
-                  const isDisputed = rental.status === 'Disputed';
+                  const rentDriveArtifact = require('../contracts/RentDrive.json');
                   return (
-                    <div
+                    <ActiveRentalCard
                       key={rental.id}
-                      className={`relative rounded-sm border bg-white p-6 transition-all duration-300 ${
-                        isDisputed ? 'border-red-400' : 'border-[#E0DDD5]'
-                      }`}
-                    >
-                      <div className="flex justify-between items-start mb-6">
-                        <div>
-                          <span className={`inline-flex items-center rounded-sm px-2.5 py-1 text-[9px] font-bold tracking-widest uppercase border ${
-                            isDisputed 
-                              ? 'bg-red-50 text-red-700 border-red-200' 
-                              : 'bg-[#1C2B3C] text-white border-[#1C2B3C]'
-                          }`}>
-                            {rental.status}
-                          </span>
-                          <h4 className="text-lg font-black text-[#1C2B3C] mt-3 uppercase tracking-wide">
-                            {vehicle?.model || 'Leased Vehicle'}
-                          </h4>
-                          <span className="text-[10px] text-[#5A6573] font-mono tracking-wider font-bold">
-                            Live Odometer: {(rental.current_odometer / 1000).toFixed(2)} km
-                          </span>
-                        </div>
-                        <div className="text-right">
-                          <span className="block text-[8px] text-[#718096] uppercase tracking-widest font-extrabold mb-1">Locked Escrow</span>
-                          <span className="text-xl font-black text-[#1C2B3C] tracking-tight">
-                            {rental.escrow_balance} USDC
-                          </span>
-                        </div>
-                      </div>
-
-                      {/* Escrow Details with refined minimalist styling */}
-                      <div className="grid grid-cols-3 gap-4 my-5 py-4 border-y border-[#F2F1EC] text-center text-xs">
-                        <div>
-                          <span className="block text-[#718096] font-bold text-[9px] tracking-wider uppercase mb-1">Distance Fee</span>
-                          <span className="text-[#1C2B3C] font-extrabold">{rental.distance_charges_accrued} USDC</span>
-                        </div>
-                        <div>
-                          <span className="block text-[#718096] font-bold text-[9px] tracking-wider uppercase mb-1">Violations</span>
-                          <span className="text-[#3E5062] font-extrabold">{rental.speed_penalties_accrued} USDC</span>
-                        </div>
-                        <div>
-                          <span className="block text-[#718096] font-bold text-[9px] tracking-wider uppercase mb-1">Total Cost</span>
-                          <span className="text-[#1C2B3C] font-black">
-                            {(Number(rental.distance_charges_accrued) + Number(rental.speed_penalties_accrued)).toFixed(2)} USDC
-                          </span>
-                        </div>
-                      </div>
-
-                      {isDisputed && (
-                        <div className="mb-5 flex items-start gap-2.5 rounded-sm bg-red-50 border border-red-200 p-4 text-red-800 text-xs leading-relaxed font-semibold">
-                          <ShieldAlert className="h-4.5 w-4.5 shrink-0 text-red-600" />
-                          <div>
-                            <span className="font-extrabold block uppercase tracking-wider text-red-900 mb-0.5">COLLISION EVENT LOGGED</span>
-                            Telemetry reported severe impact force. Escrow deposit locked pending insurance adjuster settlement.
-                          </div>
-                        </div>
-                      )}
-
-                      {!isDisputed && (
-                        <div className="mb-5 flex items-center gap-2 rounded-sm bg-[#F2F1EC] border border-[#DDDCD4] p-3.5 text-[#3E5062] text-[10px] font-bold uppercase tracking-wider">
-                          <ShieldCheck className="h-4 w-4 shrink-0 text-[#1C2B3C]" />
-                          <span>OBD-II hardware online: speed & coordinates active</span>
-                        </div>
-                      )}
-
-                      <button
-                        onClick={() => handleEndRental(rental)}
-                        disabled={endingId !== null || isDisputed}
-                        className={`w-full py-3.5 rounded-sm font-bold text-[11px] tracking-widest uppercase transition-all duration-300 border ${
-                          isDisputed
-                            ? 'bg-[#EAE8E1] text-[#A0AEC0] border-[#DDDCD4] cursor-not-allowed'
-                            : 'bg-[#1C2B3C] text-white hover:bg-red-700 hover:border-red-700 hover:text-white border-[#1C2B3C]'
-                        }`}
-                      >
-                        {endingId === rental.id ? 'PROCESSING SETTLEMENT...' : 'CLOSE LEASE & REFUND ESCROW'}
-                      </button>
-                    </div>
+                      rental={rental}
+                      vehicle={vehicle}
+                      contractAddress={contractAddress}
+                      abi={rentDriveArtifact.abi}
+                      endingId={endingId}
+                      handleEndRental={handleEndRental}
+                    />
                   );
                 })}
               </div>
@@ -330,6 +490,7 @@ export default function MyRentals({ activeTab }: MyRentalsProps) {
                       <th className="p-4">DISTANCE SUM</th>
                       <th className="p-4">PENALTY DISBURSEMENTS</th>
                       <th className="p-4">LEASE STATE</th>
+                      <th className="p-4">FEEDBACK</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-[#F2F1EC] text-[#1C2B3C] font-medium">
@@ -340,11 +501,27 @@ export default function MyRentals({ activeTab }: MyRentalsProps) {
                           <td className="p-4 font-bold uppercase tracking-wide">{vehicle?.model || 'Unknown'}</td>
                           <td className="p-4">{new Date(rental.start_time).toLocaleString()}</td>
                           <td className="p-4 font-bold">{rental.distance_charges_accrued} USDC</td>
-                          <td className="p-4 font-bold text-orange-700">{rental.speed_penalties_accrued} USDC</td>
+                          <td className="p-4 font-bold text-orange-700">
+                            {rental.speed_penalties_accrued} USDC (Speed) / {rental.geofence_penalties_accrued || 0} USDC (Geofence)
+                          </td>
                           <td className="p-4">
                             <span className="inline-flex rounded-sm bg-[#EAE8E1] px-2.5 py-1 text-[9px] font-bold tracking-widest text-[#5A6573] border border-[#DDDCD4] uppercase">
                               {rental.status}
                             </span>
+                          </td>
+                          <td className="p-4">
+                            {reviewedRentalIds.has(rental.id) ? (
+                              <span className="text-[10px] font-bold uppercase tracking-wider text-green-700 bg-green-50 px-2 py-0.5 border border-green-200 rounded-sm">
+                                Reviewed
+                              </span>
+                            ) : (
+                              <button
+                                onClick={() => setSelectedReviewRental(rental)}
+                                className="px-3 py-1.5 bg-[#1C2B3C] text-white rounded-sm text-[9px] font-bold uppercase tracking-widest hover:bg-[#111A24] border border-[#1C2B3C] transition-all"
+                              >
+                                Write Review
+                              </button>
+                            )}
                           </td>
                         </tr>
                       );
@@ -356,6 +533,18 @@ export default function MyRentals({ activeTab }: MyRentalsProps) {
           </div>
         </div>
       )}
-    </div>
+
+      {selectedReviewRental && (
+        <ReviewModal
+          rental={selectedReviewRental}
+          vehicle={vehicles.find((v) => v.id === selectedReviewRental.vehicle_id)}
+          onClose={() => setSelectedReviewRental(null)}
+          onSuccess={() => {
+            fetchData();
+          }}
+        />
+      )}
+      </div>
+    </PullToRefresh>
   );
 }

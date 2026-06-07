@@ -40,3 +40,33 @@ body {
 ::-webkit-scrollbar-thumb:hover {
   background: #A4A297;
 }
+
+/* ─── Currency Indicator System ─────────────────────────────────── */
+.currency-usdc {
+  --currency-color: #2775CA;
+  --currency-bg: #EBF2FB;
+  --currency-border: #B8D4F0;
+}
+
+.currency-eurc {
+  --currency-color: #1A47B8;
+  --currency-bg: #E8ECF7;
+  --currency-border: #A8B8E0;
+}
+
+.currency-badge {
+  color: var(--currency-color);
+  background-color: var(--currency-bg);
+  border-color: var(--currency-border);
+}
+
+/* FX rate pulse animation */
+@keyframes fx-pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.6; }
+}
+
+.fx-live-indicator {
+  animation: fx-pulse 2s ease-in-out infinite;
+}
+

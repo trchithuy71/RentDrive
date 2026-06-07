@@ -16,6 +16,7 @@ interface Rental {
   crash_detected: boolean;
   distance_charges_accrued: number;
   speed_penalties_accrued: number;
+  geofence_penalties_accrued?: number;
 }
 
 interface Vehicle {
@@ -23,7 +24,21 @@ interface Vehicle {
   model: string;
   speed_limit_kmh: number;
   rate_per_km: number;
+  speed_penalty_usdc: number;
+  deposit_required: number;
+  geofence_center_lat?: number;
+  geofence_center_lng?: number;
+  geofence_radius_meters?: number;
+  geofence_violation_penalty?: number;
 }
+
+const haversineDistance = (lat1: number, lon1: number, lat2: number, lon2: number): number => {
+  const R = 6371000; // Earth radius in meters
+  const dLat = (lat2 - lat1) * Math.PI / 180;
+  const dLon = (lon2 - lon1) * Math.PI / 180;
+  const a = Math.sin(dLat/2)**2 + Math.cos(lat1*Math.PI/180) * Math.cos(lat2*Math.PI/180) * Math.sin(dLon/2)**2;
+  return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+};
 
 export default function Simulator() {
   const { isConnected, address } = useAccount();
@@ -45,6 +60,52 @@ export default function Simulator() {
   const [logs, setLogs] = useState<string[]>([]);
   const [lastTxHash, setLastTxHash] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
+
+  // Circle Gateway Nanopayments State
+  const [gatewayDeposit, setGatewayDeposit] = useState(0);
+  const [nanopaymentsAccumulated, setNanopaymentsAccumulated] = useState(0);
+  const [gasSaved, setGasSaved] = useState(0);
+  const [updatesCount, setUpdatesCount] = useState(0);
+  const [settlementsCount, setSettlementsCount] = useState(0);
+
+  useEffect(() => {
+    if (selectedRentalId) {
+      fetchGatewayState(selectedRentalId);
+    }
+  }, [selectedRentalId]);
+
+  const fetchGatewayState = async (id: number) => {
+    try {
+      const res = await fetch(`/api/nanopay?rentalId=${id}`);
+      const data = await res.json();
+      if (data.success && data.state) {
+        setGatewayDeposit(data.state.gatewayDeposit);
+        setNanopaymentsAccumulated(data.state.nanopaymentsAccumulated);
+        setGasSaved(data.state.gasSavedUsdc);
+        setUpdatesCount(data.state.telemetryUpdateCount);
+        setSettlementsCount(data.state.onchainSettlementCount);
+      } else {
+        // Initialize deposit automatically with the rental deposit required
+        const matchRental = rentals.find(r => r.id === id);
+        const initAmt = matchRental ? Number(matchRental.escrow_balance || 200) : 200;
+        const initRes = await fetch(`/api/nanopay`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ action: 'deposit', rentalId: id, amount: initAmt })
+        });
+        const initData = await initRes.json();
+        if (initData.success && initData.state) {
+          setGatewayDeposit(initData.state.gatewayDeposit);
+          setNanopaymentsAccumulated(initData.state.nanopaymentsAccumulated);
+          setGasSaved(initData.state.gasSavedUsdc);
+          setUpdatesCount(initData.state.telemetryUpdateCount);
+          setSettlementsCount(initData.state.onchainSettlementCount);
+        }
+      }
+    } catch (e) {
+      console.error('Failed to fetch gateway state:', e);
+    }
+  };
 
   useEffect(() => {
     fetchRentals();
@@ -74,6 +135,14 @@ export default function Simulator() {
 
   const selectedRental = rentals.find(r => r.id === selectedRentalId);
   const selectedVehicle = selectedRental ? vehicles.find(v => v.id === selectedRental.vehicle_id) : null;
+
+  const centerLat = selectedVehicle?.geofence_center_lat !== undefined ? Number(selectedVehicle.geofence_center_lat) : 21.028511;
+  const centerLng = selectedVehicle?.geofence_center_lng !== undefined ? Number(selectedVehicle.geofence_center_lng) : 105.804817;
+  const radiusMeters = selectedVehicle?.geofence_radius_meters !== undefined ? Number(selectedVehicle.geofence_radius_meters) : 5000;
+  const violationPenalty = selectedVehicle?.geofence_violation_penalty !== undefined ? Number(selectedVehicle.geofence_violation_penalty) : 0;
+
+  const currentDistance = haversineDistance(lat, lng, centerLat, centerLng);
+  const isInsideGeofence = currentDistance <= radiusMeters;
 
   // Auto Drive Simulator Loop
   useEffect(() => {
@@ -118,10 +187,21 @@ export default function Simulator() {
       const data = await res.json();
       if (data.success) {
         const timestamp = new Date().toLocaleTimeString();
-        let logMsg = `[${timestamp}] Lat:${telemetryBody.latitude}, Lng:${telemetryBody.longitude} | Speed: ${telemetryBody.speed} km/h | Odometer: ${(telemetryBody.odometer / 1000).toFixed(3)} km`;
+        let logMsg = `[${timestamp}] Lat:${telemetryBody.latitude}, Lng:${telemetryBody.longitude} | Odo: ${(telemetryBody.odometer / 1000).toFixed(3)} km`;
         
+        // Output routing details
+        if (data.onChainUpdated) {
+          logMsg += ` | ⛓️ BATCH SETTLED ON-CHAIN (tx: ${data.onChainTxHash?.substring(0, 8)}...)`;
+        } else {
+          logMsg += ` | ⚡ GASLESS NANOPAYMENT`;
+        }
+
         if (selectedVehicle && speed > selectedVehicle.speed_limit_kmh) {
-          logMsg += ` ⚠️ SPEED LIMIT BREACHED (-${selectedVehicle.rate_per_km} USDC)`;
+          logMsg += ` ⚠️ SPEED LIMIT BREACHED (-${selectedVehicle.speed_penalty_usdc} USDC)`;
+        }
+
+        if (!isInsideGeofence) {
+          logMsg += ` 🚨 GEOFENCE OUT OF BOUNDS (-${violationPenalty} USDC)`;
         }
         
         if (crashSensor) {
@@ -135,10 +215,20 @@ export default function Simulator() {
           setLastTxHash(data.onChainTxHash);
         }
 
+        if (data.gatewayState) {
+          setGatewayDeposit(data.gatewayState.gatewayDeposit);
+          setNanopaymentsAccumulated(data.gatewayState.nanopaymentsAccumulated);
+          setGasSaved(data.gatewayState.gasSavedUsdc);
+          setUpdatesCount(data.gatewayState.telemetryUpdateCount);
+          setSettlementsCount(data.gatewayState.onchainSettlementCount);
+        }
+
         if (selectedRental) {
           selectedRental.current_odometer = telemetryBody.odometer;
           selectedRental.distance_charges_accrued = data.rental.distance_charges_accrued;
           selectedRental.speed_penalties_accrued = data.rental.speed_penalties_accrued;
+          selectedRental.geofence_penalties_accrued = data.rental.geofence_penalties_accrued;
+          selectedRental.escrow_balance = data.rental.escrow_balance;
           selectedRental.status = data.rental.status;
           if (data.rental.status === 'Disputed') {
             fetchRentals();
@@ -226,14 +316,32 @@ export default function Simulator() {
                 <span>SPEEDOMETER</span>
                 <span className="text-[#1C2B3C] font-black">{speed} km/h</span>
               </div>
-              <input
-                type="range"
-                min="0"
-                max="160"
-                value={speed}
-                onChange={(e) => setSpeed(Number(e.target.value))}
-                className="w-full accent-[#1C2B3C] cursor-pointer"
-              />
+              <div className="flex items-center gap-2.5">
+                <button
+                  type="button"
+                  onClick={() => setSpeed(prev => Math.max(0, prev - 10))}
+                  className="w-11 h-11 flex items-center justify-center rounded-sm bg-[#F2F1EC] hover:bg-[#EAE8E1] text-[#1C2B3C] font-black border border-[#DDDCD4] text-xs transition-all"
+                  style={{ touchAction: 'manipulation' }}
+                >
+                  -10
+                </button>
+                <input
+                  type="range"
+                  min="0"
+                  max="160"
+                  value={speed}
+                  onChange={(e) => setSpeed(Number(e.target.value))}
+                  className="flex-1 h-11 accent-[#1C2B3C] cursor-pointer"
+                />
+                <button
+                  type="button"
+                  onClick={() => setSpeed(prev => Math.min(160, prev + 10))}
+                  className="w-11 h-11 flex items-center justify-center rounded-sm bg-[#F2F1EC] hover:bg-[#EAE8E1] text-[#1C2B3C] font-black border border-[#DDDCD4] text-xs transition-all"
+                  style={{ touchAction: 'manipulation' }}
+                >
+                  +10
+                </button>
+              </div>
             </div>
 
             {/* Odometer Manual Increment */}
@@ -244,22 +352,57 @@ export default function Simulator() {
               </div>
               <div className="flex gap-2">
                 <button
+                  type="button"
                   onClick={() => {
                     setOdometer(prev => prev + 1000);
                     sendTelemetryUpdate(1000);
                   }}
-                  className="flex-1 py-2.5 rounded-sm bg-[#F2F1EC] hover:bg-[#EAE8E1] text-[10px] font-bold uppercase tracking-wider text-[#1C2B3C] border border-[#DDDCD4] transition-all"
+                  className="flex-1 h-11 rounded-sm bg-[#F2F1EC] hover:bg-[#EAE8E1] text-[10px] font-bold uppercase tracking-wider text-[#1C2B3C] border border-[#DDDCD4] transition-all"
+                  style={{ touchAction: 'manipulation' }}
                 >
                   +1 km (Drive)
                 </button>
                 <button
+                  type="button"
                   onClick={() => {
                     setOdometer(prev => prev + 5000);
                     sendTelemetryUpdate(5000);
                   }}
-                  className="flex-1 py-2.5 rounded-sm bg-[#F2F1EC] hover:bg-[#EAE8E1] text-[10px] font-bold uppercase tracking-wider text-[#1C2B3C] border border-[#DDDCD4] transition-all"
+                  className="flex-1 h-11 rounded-sm bg-[#F2F1EC] hover:bg-[#EAE8E1] text-[10px] font-bold uppercase tracking-wider text-[#1C2B3C] border border-[#DDDCD4] transition-all"
+                  style={{ touchAction: 'manipulation' }}
                 >
                   +5 km (Drive)
+                </button>
+              </div>
+            </div>
+
+            {/* Geofence Simulator Control */}
+            <div>
+              <label className="block text-[9px] text-[#718096] font-bold uppercase tracking-widest mb-2">ROUTE SIMULATION CHEAT</label>
+              <div className="flex gap-2">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setLat(centerLat);
+                    setLng(centerLng);
+                    setTimeout(() => sendTelemetryUpdate(0), 100);
+                  }}
+                  className="flex-1 h-11 bg-[#F2F1EC] hover:bg-emerald-50 hover:text-emerald-700 hover:border-emerald-300 rounded-sm text-[9px] font-bold uppercase tracking-wider text-[#1C2B3C] border border-[#DDDCD4] transition-all"
+                  style={{ touchAction: 'manipulation' }}
+                >
+                  Reset to Center
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setLat(centerLat + 0.1);
+                    setLng(centerLng + 0.1);
+                    setTimeout(() => sendTelemetryUpdate(0), 100);
+                  }}
+                  className="flex-1 h-11 bg-[#F2F1EC] hover:bg-red-50 hover:text-red-700 hover:border-red-300 rounded-sm text-[9px] font-bold uppercase tracking-wider text-[#1C2B3C] border border-[#DDDCD4] transition-all"
+                  style={{ touchAction: 'manipulation' }}
+                >
+                  Exit Geofence
                 </button>
               </div>
             </div>
@@ -267,12 +410,14 @@ export default function Simulator() {
             {/* Switches */}
             <div className="border-t border-[#F2F1EC] pt-5 flex gap-3">
               <button
+                type="button"
                 onClick={() => setIsDriving(!isDriving)}
-                className={`flex-1 py-3.5 rounded-sm font-bold text-xs tracking-widest uppercase transition-all flex items-center justify-center gap-2 ${
+                className={`flex-1 h-12 rounded-sm font-bold text-xs tracking-widest uppercase transition-all flex items-center justify-center gap-2 ${
                   isDriving
                     ? 'bg-red-50 text-red-700 border border-red-200'
                     : 'bg-[#1C2B3C] text-white hover:bg-[#111A24]'
                 }`}
+                style={{ touchAction: 'manipulation' }}
               >
                 {isDriving ? (
                   <>
@@ -286,9 +431,11 @@ export default function Simulator() {
               </button>
 
               <button
+                type="button"
                 onClick={triggerImpact}
                 disabled={crashSensor}
-                className="flex-1 py-3.5 rounded-sm bg-[#EAE8E1] text-[#1C2B3C] hover:bg-[#DDDCD4] transition-all font-bold text-xs tracking-widest uppercase border border-[#DDDCD4] flex items-center justify-center gap-2"
+                className="flex-1 h-12 rounded-sm bg-[#EAE8E1] text-[#1C2B3C] hover:bg-[#DDDCD4] transition-all font-bold text-xs tracking-widest uppercase border border-[#DDDCD4] flex items-center justify-center gap-2"
+                style={{ touchAction: 'manipulation' }}
               >
                 <AlertTriangle className="h-3.5 w-3.5" /> IMPACT CRASH
               </button>
@@ -299,7 +446,7 @@ export default function Simulator() {
           <div className="lg:col-span-2 space-y-6">
             
             {/* Live stats */}
-            <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+            <div className="grid grid-cols-2 sm:grid-cols-5 gap-4">
               <div className="rounded-sm border border-[#E0DDD5] bg-white p-4 text-center">
                 <Gauge className="h-4.5 w-4.5 text-[#1C2B3C] mx-auto mb-2" />
                 <span className="block text-[8px] text-[#718096] uppercase font-bold tracking-wider">LIVE SPEED</span>
@@ -321,6 +468,108 @@ export default function Simulator() {
                 <span className={`text-base font-extrabold ${crashSensor ? 'text-red-600 animate-pulse' : 'text-[#3E5062]'}`}>
                   {crashSensor ? 'TRIGGERED' : 'SECURE'}
                 </span>
+              </div>
+              <div className="rounded-sm border border-[#E0DDD5] bg-white p-4 text-center">
+                <Orbit className="h-4.5 w-4.5 text-[#1C2B3C] mx-auto mb-2" />
+                <span className="block text-[8px] text-[#718096] uppercase font-bold tracking-wider">GEOFENCE</span>
+                <span className={`text-base font-extrabold ${isInsideGeofence ? 'text-emerald-600' : 'text-red-600 animate-pulse'}`}>
+                  {isInsideGeofence ? 'INSIDE' : 'OUTSIDE'}
+                </span>
+              </div>
+            </div>
+
+            {/* Geofence Info Overlay */}
+            {selectedVehicle && (
+              <div className="rounded-sm bg-white border border-[#DDDCD4] p-5 shadow-sm text-xs font-semibold text-[#1C2B3C] space-y-2">
+                <span className="block text-[9px] text-[#718096] font-bold uppercase tracking-widest pb-1 border-b border-[#F2F1EC]">
+                  ACTIVE GEOFENCE DETAILS
+                </span>
+                <div className="flex justify-between uppercase">
+                  <span className="text-[#718096]">Boundary Center:</span>
+                  <span>{centerLat.toFixed(6)}, {centerLng.toFixed(6)}</span>
+                </div>
+                <div className="flex justify-between uppercase">
+                  <span className="text-[#718096]">Permitted Radius:</span>
+                  <span>{radiusMeters} meters</span>
+                </div>
+                <div className="flex justify-between uppercase">
+                  <span className="text-[#718096]">Distance to Center:</span>
+                  <span className={isInsideGeofence ? 'text-emerald-600' : 'text-red-600 font-extrabold animate-pulse'}>
+                    {currentDistance.toFixed(0)} meters
+                  </span>
+                </div>
+                <div className="flex justify-between uppercase border-t border-[#F2F1EC] pt-2">
+                  <span className="text-[#718096]">Out-Of-Bounds Penalty:</span>
+                  <span className="text-red-600 font-extrabold">{violationPenalty} USDC per report</span>
+                </div>
+              </div>
+            )}
+
+            {/* Circle Gateway Nanopayments Dashboard */}
+            <div className="rounded-sm bg-white border border-[#DDDCD4] p-5 shadow-sm text-xs font-semibold text-[#1C2B3C] space-y-4">
+              <div className="flex justify-between items-center pb-2 border-b border-[#F2F1EC]">
+                <span className="block text-[9px] text-[#718096] font-bold uppercase tracking-widest">
+                  Circle Gateway Nanopayments (x402 Micro-Billing)
+                </span>
+                <span className="bg-[#1C2B3C] text-white text-[8px] font-mono px-2 py-0.5 rounded-sm uppercase tracking-widest font-extrabold animate-pulse">
+                  Active
+                </span>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div className="bg-[#F2F1EC] p-3 rounded-sm border border-[#DDDCD4]">
+                  <span className="block text-[8px] text-[#718096] uppercase font-bold tracking-wider mb-1">Renter Gateway Escrow</span>
+                  <span className="text-sm font-extrabold text-[#1C2B3C]">{(gatewayDeposit).toFixed(4)} USDC</span>
+                </div>
+                <div className="bg-[#F2F1EC] p-3 rounded-sm border border-[#DDDCD4]">
+                  <span className="block text-[8px] text-[#718096] uppercase font-bold tracking-wider mb-1">Streamed Nanopayments</span>
+                  <span className="text-sm font-extrabold text-[#1C2B3C] font-mono">{(nanopaymentsAccumulated).toFixed(6)} USDC</span>
+                </div>
+                <div className="bg-[#F2F1EC] p-3 rounded-sm border border-[#DDDCD4] relative overflow-hidden">
+                  <span className="block text-[8px] text-emerald-800 uppercase font-bold tracking-wider mb-1">Gas Fees Saved</span>
+                  <span className="text-sm font-extrabold text-emerald-700">{(gasSaved).toFixed(4)} USDC</span>
+                  <span className="block text-[7.5px] text-[#718096] font-mono mt-0.5">({updatesCount - settlementsCount} on-chain txs skipped)</span>
+                </div>
+              </div>
+
+              <div className="flex justify-between items-center text-[9px] text-[#718096] border-t border-[#F2F1EC] pt-3">
+                <div className="flex flex-col">
+                  <span>Batch Status: {updatesCount % 5}/5 to auto-settle</span>
+                  <span>Total Updates: {updatesCount} · Total Settled: {settlementsCount}</span>
+                </div>
+                <button
+                  onClick={async () => {
+                    if (!selectedRentalId) return;
+                    setSubmitting(true);
+                    try {
+                      const res = await fetch('/api/nanopay', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ action: 'settle', rentalId: selectedRentalId }),
+                      });
+                      const data = await res.json();
+                      if (data.success && data.state) {
+                        setGatewayDeposit(data.state.gatewayDeposit);
+                        setNanopaymentsAccumulated(data.state.nanopaymentsAccumulated);
+                        setGasSaved(data.state.gasSavedUsdc);
+                        setUpdatesCount(data.state.telemetryUpdateCount);
+                        setSettlementsCount(data.state.onchainSettlementCount);
+                        if (data.txHash) setLastTxHash(data.txHash);
+                        
+                        const timestamp = new Date().toLocaleTimeString();
+                        setLogs(prev => [`[${timestamp}] ⛓️ MANUAL ON-CHAIN BATCH SETTLED`, ...prev.slice(0, 15)]);
+                      }
+                    } catch (e) {
+                      console.error(e);
+                    } finally {
+                      setSubmitting(false);
+                    }
+                  }}
+                  disabled={submitting || updatesCount === 0}
+                  className="rounded-sm border border-[#DDDCD4] bg-white hover:bg-[#F2F1EC] px-3 py-1.5 text-[8.5px] font-black uppercase text-[#1C2B3C] tracking-widest transition-all"
+                >
+                  Settle Batch On-Chain
+                </button>
               </div>
             </div>
 

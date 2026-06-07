@@ -11,7 +11,16 @@ import LegalPages from '@/components/LegalPages';
 import Marketplace from '@/components/Marketplace';
 import MyRentals from '@/components/MyRentals';
 import OwnerPortal from '@/components/OwnerPortal';
-import Simulator from '@/components/Simulator';
+import dynamic from 'next/dynamic';
+
+const Simulator = dynamic(() => import('@/components/Simulator'), {
+  ssr: false,
+  loading: () => (
+    <div className="text-center py-24 border border-dashed border-[#DDDCD4] bg-[#EAE8E1]/30 rounded-sm font-bold uppercase tracking-widest text-[#718096] text-xs">
+      Loading Telematics Simulator Component...
+    </div>
+  )
+});
 
 export default function Home() {
   const [currentView, setCurrentView] = useState('landing');
