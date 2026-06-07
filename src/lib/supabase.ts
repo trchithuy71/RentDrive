@@ -38,6 +38,11 @@ const defaultDb = {
       speed_limit_kmh: 100,
       speed_penalty_usdc: 50.0,
       deposit_required: 200.0,
+      geofence_center_lat: 21.028511,
+      geofence_center_lng: 105.804817,
+      geofence_radius_meters: 5000,
+      geofence_violation_penalty: 30.0,
+      accepted_currency: 'USDC',
       is_active: true,
       created_at: new Date().toISOString()
     },
@@ -53,12 +58,18 @@ const defaultDb = {
       speed_limit_kmh: 120,
       speed_penalty_usdc: 80.0,
       deposit_required: 300.0,
+      geofence_center_lat: 21.028511,
+      geofence_center_lng: 105.804817,
+      geofence_radius_meters: 3000,
+      geofence_violation_penalty: 40.0,
+      accepted_currency: 'EURC',
       is_active: true,
       created_at: new Date().toISOString()
     }
   ],
   rentals: [],
-  telemetry_logs: []
+  telemetry_logs: [],
+  reviews: []
 };
 
 // Initialize DB file if not exists
@@ -79,7 +90,11 @@ export const getLocalDb = () => {
   if (typeof window === 'undefined') {
     try {
       const data = fs.readFileSync(dbFilePath, 'utf8');
-      return JSON.parse(data);
+      const parsed = JSON.parse(data);
+      if (!parsed.reviews) {
+        parsed.reviews = [];
+      }
+      return parsed;
     } catch (e) {
       return defaultDb;
     }
@@ -229,6 +244,32 @@ export const db = {
     return getLocalDb().telemetry_logs.filter((t: any) => t.rental_id === rentalId);
   },
 
+  getTelemetryLogsAll: async () => {
+    if (useRealSupabase && supabase) {
+      const { data, error } = await supabase.from('telemetry_logs').select('*').order('recorded_at', { ascending: true });
+      if (error) throw error;
+      return data;
+    }
+    return getLocalDb().telemetry_logs || [];
+  },
+
+  updateVehicleStatus: async (id: number, isActive: boolean) => {
+    if (useRealSupabase && supabase) {
+      const { data, error } = await supabase.from('vehicles').update({ is_active: isActive }).eq('id', id).select().single();
+      if (error) throw error;
+      return data;
+    }
+
+    const local = getLocalDb();
+    const idx = local.vehicles.findIndex((v: any) => v.id === id);
+    if (idx >= 0) {
+      local.vehicles[idx].is_active = isActive;
+      writeLocalDb(local);
+      return local.vehicles[idx];
+    }
+    return null;
+  },
+
   addTelemetryLog: async (log: any) => {
     if (useRealSupabase && supabase) {
       const { data, error } = await supabase.from('telemetry_logs').insert(log).select().single();
@@ -245,5 +286,105 @@ export const db = {
     local.telemetry_logs.push(newLog);
     writeLocalDb(local);
     return newLog;
+  },
+
+  getReviews: async () => {
+    if (useRealSupabase && supabase) {
+      const { data, error } = await supabase.from('reviews').select('*');
+      if (error) throw error;
+      return data;
+    }
+    const local = getLocalDb();
+    return local.reviews || [];
+  },
+
+  getVehicleReviews: async (vehicleId: number) => {
+    if (useRealSupabase && supabase) {
+      const { data: rentalsData, error: rError } = await supabase
+        .from('rentals')
+        .select('id')
+        .eq('vehicle_id', vehicleId);
+      if (rError) throw rError;
+      const rentalIds = rentalsData?.map((r: any) => r.id) || [];
+      if (rentalIds.length === 0) return [];
+
+      const { data, error } = await supabase
+        .from('reviews')
+        .select('*')
+        .in('rental_id', rentalIds);
+      if (error) throw error;
+      return data;
+    }
+
+    const local = getLocalDb();
+    const rentals = local.rentals || [];
+    const reviews = local.reviews || [];
+    const rentalIds = rentals
+      .filter((r: any) => Number(r.vehicle_id) === Number(vehicleId))
+      .map((r: any) => r.id);
+    return reviews.filter((rev: any) => rentalIds.includes(rev.rental_id));
+  },
+
+  getUserReviews: async (userAddress: string) => {
+    const addr = userAddress.toLowerCase();
+    if (useRealSupabase && supabase) {
+      const { data, error } = await supabase
+        .from('reviews')
+        .select('*')
+        .eq('reviewee', addr);
+      if (error) throw error;
+      return data;
+    }
+
+    const local = getLocalDb();
+    const reviews = local.reviews || [];
+    return reviews.filter((rev: any) => rev.reviewee.toLowerCase() === addr);
+  },
+
+  createReview: async (review: {
+    rental_id: number;
+    reviewer: string;
+    reviewee: string;
+    rating: number;
+    comment: string;
+    role: string;
+  }) => {
+    const reviewer = review.reviewer.toLowerCase();
+    const reviewee = review.reviewee.toLowerCase();
+    const newReview = {
+      ...review,
+      reviewer,
+      reviewee,
+      created_at: new Date().toISOString(),
+    };
+
+    if (useRealSupabase && supabase) {
+      const { data, error } = await supabase
+        .from('reviews')
+        .insert(newReview)
+        .select()
+        .single();
+      if (error) throw error;
+      return data;
+    }
+
+    const local = getLocalDb();
+    if (!local.reviews) local.reviews = [];
+    
+    // Check duplicate
+    const exists = local.reviews.some(
+      (r: any) => r.rental_id === Number(review.rental_id) && r.reviewer.toLowerCase() === reviewer
+    );
+    if (exists) {
+      throw new Error("Review already exists for this rental and reviewer");
+    }
+
+    const createdReview = {
+      ...newReview,
+      id: local.reviews.length + 1,
+    };
+    local.reviews.push(createdReview);
+    writeLocalDb(local);
+    return createdReview;
   }
 };

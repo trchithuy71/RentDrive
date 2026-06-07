@@ -22,6 +22,8 @@ const config = getDefaultConfig({
   ssr: true,
 });
 
+import { CircleAppProvider } from '@/contexts/CircleAppContext';
+
 export function Web3ContextProvider({ children }: { children: ReactNode }) {
   return (
     <WagmiProvider config={config}>
@@ -33,9 +35,12 @@ export function Web3ContextProvider({ children }: { children: ReactNode }) {
           fontStack: 'system',
           overlayBlur: 'small',
         })}>
-          {children}
+          <CircleAppProvider>
+            {children}
+          </CircleAppProvider>
         </RainbowKitProvider>
       </QueryClientProvider>
     </WagmiProvider>
   );
 }
+
