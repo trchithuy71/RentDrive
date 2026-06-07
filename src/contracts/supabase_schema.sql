@@ -23,6 +23,11 @@ CREATE TABLE IF NOT EXISTS rentdrive.vehicles (
     speed_limit_kmh INT DEFAULT 100,
     speed_penalty_usdc NUMERIC(18, 6) DEFAULT 0,  -- USDC
     deposit_required NUMERIC(18, 6) NOT NULL,     -- USDC
+    geofence_center_lat NUMERIC(9, 6) DEFAULT 21.028511,
+    geofence_center_lng NUMERIC(9, 6) DEFAULT 105.804817,
+    geofence_radius_meters NUMERIC(12, 2) DEFAULT 5000,
+    geofence_violation_penalty NUMERIC(18, 6) DEFAULT 0,
+    accepted_currency VARCHAR(10) DEFAULT 'USDC',
     is_active BOOLEAN DEFAULT TRUE,
     created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
 );
@@ -40,6 +45,8 @@ CREATE TABLE IF NOT EXISTS rentdrive.rentals (
     escrow_balance NUMERIC(18, 6) NOT NULL,
     speed_penalties_accrued NUMERIC(18, 6) DEFAULT 0,
     distance_charges_accrued NUMERIC(18, 6) DEFAULT 0,
+    geofence_penalties_accrued NUMERIC(18, 6) DEFAULT 0,
+    payment_currency VARCHAR(10) DEFAULT 'USDC',
     status VARCHAR(20) DEFAULT 'Active', -- 'Active', 'Completed', 'Disputed', 'Resolved'
     crash_detected BOOLEAN DEFAULT FALSE,
     created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
@@ -54,6 +61,7 @@ CREATE TABLE IF NOT EXISTS rentdrive.telemetry_logs (
     speed NUMERIC(5, 2) NOT NULL,      -- in km/h
     odometer NUMERIC(12, 2) NOT NULL,  -- in meters
     crash_sensor BOOLEAN DEFAULT FALSE,
+    geofence_violated BOOLEAN DEFAULT FALSE,
     recorded_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
 );
 
@@ -62,3 +70,21 @@ CREATE INDEX IF NOT EXISTS idx_rentals_vehicle_id ON rentdrive.rentals(vehicle_i
 CREATE INDEX IF NOT EXISTS idx_rentals_renter ON rentdrive.rentals(renter);
 CREATE INDEX IF NOT EXISTS idx_telemetry_rental_id ON rentdrive.telemetry_logs(rental_id);
 CREATE INDEX IF NOT EXISTS idx_telemetry_recorded_at ON rentdrive.telemetry_logs(recorded_at DESC);
+
+-- Reviews table
+CREATE TABLE IF NOT EXISTS rentdrive.reviews (
+    id SERIAL PRIMARY KEY,
+    rental_id INT NOT NULL REFERENCES rentdrive.rentals(id),
+    reviewer VARCHAR(42) NOT NULL,
+    reviewee VARCHAR(42) NOT NULL,
+    rating INT CHECK (rating >= 1 AND rating <= 5),
+    comment TEXT,
+    role VARCHAR(10), -- 'renter' or 'owner'
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+    UNIQUE(rental_id, reviewer)
+);
+
+CREATE INDEX IF NOT EXISTS idx_reviews_rental_id ON rentdrive.reviews(rental_id);
+CREATE INDEX IF NOT EXISTS idx_reviews_reviewer ON rentdrive.reviews(reviewer);
+CREATE INDEX IF NOT EXISTS idx_reviews_reviewee ON rentdrive.reviews(reviewee);
+

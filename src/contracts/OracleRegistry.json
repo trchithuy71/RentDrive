@@ -1,0 +1,444 @@
+{
+  "abi": [
+    {
+      "inputs": [],
+      "stateMutability": "nonpayable",
+      "type": "constructor"
+    },
+    {
+      "anonymous": false,
+      "inputs": [
+        {
+          "indexed": true,
+          "internalType": "address",
+          "name": "agentAddress",
+          "type": "address"
+        },
+        {
+          "indexed": true,
+          "internalType": "uint256",
+          "name": "tokenId",
+          "type": "uint256"
+        },
+        {
+          "indexed": false,
+          "internalType": "string",
+          "name": "metadataUri",
+          "type": "string"
+        }
+      ],
+      "name": "AgentRegistered",
+      "type": "event"
+    },
+    {
+      "anonymous": false,
+      "inputs": [
+        {
+          "indexed": true,
+          "internalType": "address",
+          "name": "oracleAddress",
+          "type": "address"
+        },
+        {
+          "indexed": false,
+          "internalType": "uint256",
+          "name": "weight",
+          "type": "uint256"
+        }
+      ],
+      "name": "OracleAdded",
+      "type": "event"
+    },
+    {
+      "anonymous": false,
+      "inputs": [
+        {
+          "indexed": true,
+          "internalType": "address",
+          "name": "oracleAddress",
+          "type": "address"
+        }
+      ],
+      "name": "OracleRemoved",
+      "type": "event"
+    },
+    {
+      "anonymous": false,
+      "inputs": [
+        {
+          "indexed": true,
+          "internalType": "address",
+          "name": "oracleAddress",
+          "type": "address"
+        },
+        {
+          "indexed": false,
+          "internalType": "uint256",
+          "name": "newReputation",
+          "type": "uint256"
+        }
+      ],
+      "name": "OracleReputationUpdated",
+      "type": "event"
+    },
+    {
+      "anonymous": false,
+      "inputs": [
+        {
+          "indexed": true,
+          "internalType": "address",
+          "name": "oracleAddress",
+          "type": "address"
+        },
+        {
+          "indexed": false,
+          "internalType": "uint256",
+          "name": "reputationPenalty",
+          "type": "uint256"
+        }
+      ],
+      "name": "OracleSlashed",
+      "type": "event"
+    },
+    {
+      "anonymous": false,
+      "inputs": [
+        {
+          "indexed": true,
+          "internalType": "address",
+          "name": "from",
+          "type": "address"
+        },
+        {
+          "indexed": true,
+          "internalType": "address",
+          "name": "to",
+          "type": "address"
+        },
+        {
+          "indexed": true,
+          "internalType": "uint256",
+          "name": "tokenId",
+          "type": "uint256"
+        }
+      ],
+      "name": "Transfer",
+      "type": "event"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "address",
+          "name": "oracleAddress",
+          "type": "address"
+        },
+        {
+          "internalType": "uint256",
+          "name": "consensusWeight",
+          "type": "uint256"
+        }
+      ],
+      "name": "addOracle",
+      "outputs": [],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "inputs": [],
+      "name": "admin",
+      "outputs": [
+        {
+          "internalType": "address",
+          "name": "",
+          "type": "address"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "uint256",
+          "name": "",
+          "type": "uint256"
+        }
+      ],
+      "name": "agentMetadataUris",
+      "outputs": [
+        {
+          "internalType": "string",
+          "name": "",
+          "type": "string"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "address",
+          "name": "",
+          "type": "address"
+        }
+      ],
+      "name": "agentTokens",
+      "outputs": [
+        {
+          "internalType": "uint256",
+          "name": "",
+          "type": "uint256"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [],
+      "name": "getOracleAddresses",
+      "outputs": [
+        {
+          "internalType": "address[]",
+          "name": "",
+          "type": "address[]"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "address",
+          "name": "oracleAddress",
+          "type": "address"
+        }
+      ],
+      "name": "getReputationScore",
+      "outputs": [
+        {
+          "internalType": "uint256",
+          "name": "",
+          "type": "uint256"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "address",
+          "name": "oracleAddress",
+          "type": "address"
+        }
+      ],
+      "name": "incrementReportCount",
+      "outputs": [],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "address",
+          "name": "oracleAddress",
+          "type": "address"
+        }
+      ],
+      "name": "isRegisteredOracle",
+      "outputs": [
+        {
+          "internalType": "bool",
+          "name": "",
+          "type": "bool"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [],
+      "name": "name",
+      "outputs": [
+        {
+          "internalType": "string",
+          "name": "",
+          "type": "string"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [],
+      "name": "nextTokenId",
+      "outputs": [
+        {
+          "internalType": "uint256",
+          "name": "",
+          "type": "uint256"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "uint256",
+          "name": "",
+          "type": "uint256"
+        }
+      ],
+      "name": "oracleAddresses",
+      "outputs": [
+        {
+          "internalType": "address",
+          "name": "",
+          "type": "address"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "address",
+          "name": "",
+          "type": "address"
+        }
+      ],
+      "name": "oracles",
+      "outputs": [
+        {
+          "internalType": "address",
+          "name": "wallet",
+          "type": "address"
+        },
+        {
+          "internalType": "uint256",
+          "name": "consensusWeight",
+          "type": "uint256"
+        },
+        {
+          "internalType": "uint256",
+          "name": "reputationScore",
+          "type": "uint256"
+        },
+        {
+          "internalType": "uint256",
+          "name": "totalReports",
+          "type": "uint256"
+        },
+        {
+          "internalType": "uint256",
+          "name": "totalSlashes",
+          "type": "uint256"
+        },
+        {
+          "internalType": "bool",
+          "name": "isSlashed",
+          "type": "bool"
+        },
+        {
+          "internalType": "bool",
+          "name": "isActive",
+          "type": "bool"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "address",
+          "name": "agentAddress",
+          "type": "address"
+        },
+        {
+          "internalType": "string",
+          "name": "metadataUri",
+          "type": "string"
+        }
+      ],
+      "name": "registerAgent",
+      "outputs": [
+        {
+          "internalType": "uint256",
+          "name": "",
+          "type": "uint256"
+        }
+      ],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "address",
+          "name": "oracleAddress",
+          "type": "address"
+        }
+      ],
+      "name": "removeOracle",
+      "outputs": [],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "address",
+          "name": "oracleAddress",
+          "type": "address"
+        },
+        {
+          "internalType": "uint256",
+          "name": "penalty",
+          "type": "uint256"
+        }
+      ],
+      "name": "slashOracle",
+      "outputs": [],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "inputs": [],
+      "name": "symbol",
+      "outputs": [
+        {
+          "internalType": "string",
+          "name": "",
+          "type": "string"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "uint256",
+          "name": "tokenId",
+          "type": "uint256"
+        }
+      ],
+      "name": "tokenURI",
+      "outputs": [
+        {
+          "internalType": "string",
+          "name": "",
+          "type": "string"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    }
+  ],
+  "bytecode": "60808060405234602b5760016005555f80546001600160a01b03191633179055610ef690816100308239f35b5f80fdfe6080806040526004361015610012575f80fd5b5f3560e01c9081630374e1fb14610c055750806306fdde0314610bae57806322b833d8146107aa5780632911eb211461077d5780632f7c4b5f146106bd5780637330aba2146105f557806375794a3c146105d857806375a67d5c1461059d57806391d66149146104a357806395d89b4114610460578063a2d9794a14610436578063addd5099146103ad578063b40f0bb214610255578063c87b56dd146101c3578063dc4bfb8514610181578063f851a4401461015a5763fdc85fc4146100d7575f80fd5b34610156576020366003190112610156576100f0610c39565b61010460018060a01b035f54163314610d9f565b6001600160a01b0316610118811515610dd8565b805f526006602052600560405f200161ff001981541690557f9c8e7d83025bef8a04c664b2f753f64b8814bdb7e27291d7e50935f18cc3c7125f80a2005b5f80fd5b34610156575f366003190112610156575f546040516001600160a01b039091168152602090f35b3461015657602036600319011261015657600435600754811015610156576101aa602091610d73565b905460405160039290921b1c6001600160a01b03168152f35b34610156576020366003190112610156576004355f818152600160205260409020546001600160a01b031615610219575f52600460205261021561020960405f20610cd3565b60405191829182610c71565b0390f35b60405162461bcd60e51b8152602060048201526014602482015273151bdad95b88191bd95cc81b9bdd08195e1a5cdd60621b6044820152606490fd5b346101565760403660031901126101565761026e610c39565b6024359060018060a01b035f541633148015610399575b61028e90610e83565b6001600160a01b03165f8181526006602052604090206005015490919060081c60ff166102b757005b815f526006602052600460405f20016102d08154610e16565b9055815f52600660205280600260405f200154115f1461034a57815f526006602052600260405f2001805491808303928311610336577f5095f28149b2bff0ced0e3f3ec180d5e24090c6a6faeb6abec22432332e6e6ea92602092555b604051908152a2005b634e487b7160e01b5f52601160045260245ffd5b5f828152600660209081526040822060028101929092556005909101805461ffff191660011790557f5095f28149b2bff0ced0e3f3ec180d5e24090c6a6faeb6abec22432332e6e6ea9161032d565b5061028e6103a633610e24565b9050610285565b34610156576020366003190112610156576001600160a01b036103ce610c39565b165f52600660205260e060405f2060ff60018060a01b0382541691600181015490600281015460038201549060056004840154930154936040519687526020870152604086015260608501526080840152818116151560a084015260081c16151560c0820152f35b34610156576020366003190112610156576004355f52600460205261021561020960405f20610cd3565b34610156575f36600319011261015657610215604051610481604082610c4f565b600981526841412d4f5241434c4560b81b602082015260405191829182610c71565b34610156576040366003190112610156576104bc610c39565b602435906104d460018060a01b035f54163314610d9f565b6001600160a01b0316906104e9821515610dd8565b815f52600360205260405f20541561054d575f8281526006602090815260409182902060058101805461ff00191661010017905560010183905590519182527f27e42c8c186bae4ba00900be68f86e7115c0845941300729a6bf8e65f4eddbaf91a2005b60405162461bcd60e51b815260206004820152602260248201527f4f7261636c65206d7573742062652072656769737465726564206173206167656044820152611b9d60f21b6064820152608490fd5b34610156576020366003190112610156576001600160a01b036105be610c39565b165f5260066020526020600260405f200154604051908152f35b34610156575f366003190112610156576020600554604051908152f35b34610156575f366003190112610156576040518060206007549283815201809260075f527fa66cc928b5edb82af9bd49922954155ab7b0942694bea4ce44661d9a8736c688905f5b81811061069e5750505081610653910382610c4f565b604051918291602083019060208452518091526040830191905f5b81811061067c575050500390f35b82516001600160a01b031684528594506020938401939092019160010161066e565b82546001600160a01b031684526020909301926001928301920161063d565b34610156576020366003190112610156576106d6610c39565b5f546001600160a01b031633148015610769575b6106f390610e83565b6001600160a01b03165f8181526006602052604090206005015460081c60ff1661071957005b805f526006602052600360405f20016107328154610e16565b9055805f5260066020526064600260405f2001541061074d57005b5f526006602052600260405f20016107658154610e16565b9055005b506106f361077633610e24565b90506106ea565b346101565760203660031901126101565760206107a061079b610c39565b610e24565b6040519015158152f35b34610156576040366003190112610156576107c3610c39565b6024359067ffffffffffffffff821161015657366023830112156101565781600401359067ffffffffffffffff82116101565736602483850101116101565761081660018060a01b035f54163314610d9f565b6001600160a01b03169061082b821515610dd8565b815f52600360205260405f2054610b69576005549061084982610e16565b600555815f52600160205260405f20836bffffffffffffffffffffffff60a01b825416179055825f52600260205260405f206108858154610e16565b9055825f5260036020528160405f2055815f52600460205260405f206108ab8154610c9b565b601f8111610b18575b50815f601f8211600114610aae575f91610aa0575b508260011b905f198460031b1c19161790555b60405160e0810181811067ffffffffffffffff821117610a8c5760405283815260208101600181526005604083019260648452606081015f815260808201905f825260a08301955f875260c0840195600187528a5f52600660205260405f209460018060a01b039060018060a01b03905116166bffffffffffffffffffffffff60a01b865416178555516001850155516002840155516003830155516004820155019151151560ff8019845416911617825551151561ff0082549160081b169061ff00191617905560075468010000000000000000811015610a8c577f77284e1a75d149ef26161b755b08a0af1ea0723010e19e79bce5626d693581f86024604060209786956109f38660018b9801600755610d73565b81549060031b9088821b9160018060a01b03901b19161790558083519485938c8552828d86015201848401375f828201840152601f01601f19168101030190a3817f27e42c8c186bae4ba00900be68f86e7115c0845941300729a6bf8e65f4eddbaf8460405160018152a280604051925f7fddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523b3ef8180a48152f35b634e487b7160e01b5f52604160045260245ffd5b6024915086010135866108c9565b5f8381526020812092508490601f198216905b818110610afa575010610ade575b5050600182811b0190556108dc565b8601602401355f19600385901b60f8161c191690558580610acf565b89840160240135855560019094019360209384019387935001610ac1565b828111156108b457815f5260205f20601f840160051c9060208510610b61575b81601f9101920160051c03905f5b828110610b545750506108b4565b5f82820155600101610b46565b5f9150610b38565b60405162461bcd60e51b815260206004820152601860248201527f4167656e7420616c7265616479207265676973746572656400000000000000006044820152606490fd5b34610156575f36600319011261015657610215604051610bcf604082610c4f565b601981527f417263204167656e74204f7261636c6520526567697374727900000000000000602082015260405191829182610c71565b34610156576020366003190112610156576020906001600160a01b03610c29610c39565b165f526003825260405f20548152f35b600435906001600160a01b038216820361015657565b90601f8019910116810190811067ffffffffffffffff821117610a8c57604052565b602060409281835280519182918282860152018484015e5f828201840152601f01601f1916010190565b90600182811c92168015610cc9575b6020831014610cb557565b634e487b7160e01b5f52602260045260245ffd5b91607f1691610caa565b9060405191825f825492610ce684610c9b565b8084529360018116908115610d515750600114610d0d575b50610d0b92500383610c4f565b565b90505f9291925260205f20905f915b818310610d35575050906020610d0b928201015f610cfe565b6020919350806001915483858901015201910190918492610d1c565b905060209250610d0b94915060ff191682840152151560051b8201015f610cfe565b600754811015610d8b5760075f5260205f2001905f90565b634e487b7160e01b5f52603260045260245ffd5b15610da657565b60405162461bcd60e51b815260206004820152600a60248201526927b7363c9030b236b4b760b11b6044820152606490fd5b15610ddf57565b60405162461bcd60e51b815260206004820152600f60248201526e496e76616c6964206164647265737360881b6044820152606490fd5b5f1981146103365760010190565b6001600160a01b03165f8181526003602052604090205415159081610e65575b81610e4d575090565b90505f52600660205260ff600560405f200154161590565b8091505f52600660205260ff600560405f20015460081c1690610e44565b15610e8a57565b60405162461bcd60e51b815260206004820152600e60248201526d139bdd08185d5d1a1bdc9a5e995960921b6044820152606490fdfea264697066735822122011b16c98021218af183ef90565014bb2cef5342480b880a6d50ad1c4e3f6d90964736f6c63430008230033"
+}
