@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { ConnectButton } from '@rainbow-me/rainbowkit';
-import { Car, ShieldAlert, Cpu, Landmark, Sparkles, BookOpen, HelpCircle, Users, Mail, LogOut, ArrowRight, Zap, Download } from 'lucide-react';
+import { Car, ShieldAlert, Cpu, Landmark, Sparkles, BookOpen, HelpCircle, Users, Mail, LogOut, ArrowRight, Zap, Download, ArrowRightLeft } from 'lucide-react';
 import UnifiedBalance from './UnifiedBalance';
 import BridgeModal from './BridgeModal';
 import GaslessReceiptModal from './GaslessReceiptModal';
@@ -60,6 +60,8 @@ export default function Navbar({ currentView, setCurrentView, dappTab, setDappTa
 
   const dappNavItems = [
     { id: 'marketplace', label: 'MARKETPLACE', icon: Car },
+    { id: 'agent', label: 'AGENT OS', icon: Sparkles },
+    { id: 'swap', label: 'SWAP', icon: ArrowRightLeft },
     { id: 'rentals', label: 'MY RENTALS', icon: ShieldAlert },
     { id: 'owner', label: 'OWNER PORTAL', icon: Landmark },
     { id: 'simulator', label: 'TELEMATICS SIMULATOR', icon: Cpu },

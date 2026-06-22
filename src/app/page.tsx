@@ -11,6 +11,8 @@ import LegalPages from '@/components/LegalPages';
 import Marketplace from '@/components/Marketplace';
 import MyRentals from '@/components/MyRentals';
 import OwnerPortal from '@/components/OwnerPortal';
+import SwapConsole from '@/components/SwapConsole';
+import AgentOS from '@/components/AgentOS';
 import dynamic from 'next/dynamic';
 
 const Simulator = dynamic(() => import('@/components/Simulator'), {
@@ -55,6 +57,12 @@ export default function Home() {
           <>
             {dappTab === 'marketplace' && (
               <Marketplace onRentalStarted={() => setDappTab('rentals')} />
+            )}
+            {dappTab === 'agent' && (
+              <AgentOS />
+            )}
+            {dappTab === 'swap' && (
+              <SwapConsole />
             )}
             {dappTab === 'rentals' && (
               <MyRentals activeTab={dappTab} />
