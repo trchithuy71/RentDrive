@@ -1,8 +1,24 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { db } from '@/lib/supabase';
+import { isValidAddress } from '@/lib/geofence';
 
 export async function GET(req: NextRequest) {
   try {
+    const { searchParams } = new URL(req.url);
+    const renter = searchParams.get('renter');
+    if (renter) {
+      if (!isValidAddress(renter)) {
+        return NextResponse.json({ error: 'Invalid renter address parameter' }, { status: 400 });
+      }
+      const renterAddr = renter.toLowerCase();
+      const allRentals = await db.getRentals();
+      const userRentals = allRentals.filter((r: any) => r.renter.toLowerCase() === renterAddr);
+      if (userRentals.length === 0) {
+        if ((db as any).bootstrapRenter) {
+          await (db as any).bootstrapRenter(renterAddr);
+        }
+      }
+    }
     const list = await db.getRentals();
     return NextResponse.json({ success: true, rentals: list });
   } catch (error: any) {
@@ -15,8 +31,8 @@ export async function POST(req: NextRequest) {
     const body = await req.json();
     const { vehicleId, renter, startOdometer } = body;
 
-    if (!vehicleId || !renter) {
-      return NextResponse.json({ error: 'Missing required parameters' }, { status: 400 });
+    if (!vehicleId || !renter || !isValidAddress(renter)) {
+      return NextResponse.json({ error: 'Missing or invalid required parameters' }, { status: 400 });
     }
 
     // 1. Fetch vehicle configuration

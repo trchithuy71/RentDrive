@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { db } from '@/lib/supabase';
+import { isValidAddress, sanitizeHtml, isRateLimited } from '@/lib/geofence';
 
 export async function GET(req: NextRequest) {
   try {
@@ -13,6 +14,9 @@ export async function GET(req: NextRequest) {
     }
 
     if (userAddress) {
+      if (!isValidAddress(userAddress)) {
+        return NextResponse.json({ success: false, error: 'Invalid userAddress parameter' }, { status: 400 });
+      }
       const list = await db.getUserReviews(userAddress);
       return NextResponse.json({ success: true, reviews: list });
     }
@@ -26,11 +30,16 @@ export async function GET(req: NextRequest) {
 
 export async function POST(req: NextRequest) {
   try {
+    const ip = req.headers.get('x-forwarded-for') || 'anonymous-reviews';
+    if (isRateLimited(ip, 5, 60000)) {
+      return NextResponse.json({ success: false, error: 'Rate limit exceeded. Please wait a moment.' }, { status: 429 });
+    }
+
     const body = await req.json();
     const { rental_id, reviewer, reviewee, rating, comment, role } = body;
 
-    if (!rental_id || !reviewer || !reviewee || !rating || !role) {
-      return NextResponse.json({ success: false, error: 'Missing required parameters' }, { status: 400 });
+    if (!rental_id || !reviewer || !reviewee || !rating || !role || !isValidAddress(reviewer) || !isValidAddress(reviewee)) {
+      return NextResponse.json({ success: false, error: 'Missing or invalid parameters' }, { status: 400 });
     }
 
     const ratingNum = Number(rating);
@@ -63,7 +72,7 @@ export async function POST(req: NextRequest) {
       reviewer,
       reviewee,
       rating: ratingNum,
-      comment: comment || '',
+      comment: sanitizeHtml(comment || ''),
       role,
     });
 

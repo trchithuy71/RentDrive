@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { db } from '@/lib/supabase';
+import { isValidAddress } from '@/lib/geofence';
 
 export async function GET(req: NextRequest) {
   try {
@@ -30,8 +31,22 @@ export async function POST(req: NextRequest) {
       accepted_currency
     } = body;
 
-    if (!owner || !plateNumber || !model || !deposit) {
-      return NextResponse.json({ error: 'Missing required parameters' }, { status: 400 });
+    if (!owner || !isValidAddress(owner) || !plateNumber || !model || !deposit) {
+      return NextResponse.json({ error: 'Missing or invalid required parameters' }, { status: 400 });
+    }
+
+    const parsedDeposit = Number(deposit);
+    const parsedBaseRate = Number(baseRate || 0);
+    const parsedRatePerKm = Number(ratePerKm || 0);
+    const parsedSpeedLimit = Number(speedLimit || 100);
+
+    if (
+      isNaN(parsedDeposit) || parsedDeposit < 0 ||
+      isNaN(parsedBaseRate) || parsedBaseRate < 0 ||
+      isNaN(parsedRatePerKm) || parsedRatePerKm < 0 ||
+      isNaN(parsedSpeedLimit) || parsedSpeedLimit < 0
+    ) {
+      return NextResponse.json({ error: 'Numeric parameters must be positive numbers' }, { status: 400 });
     }
 
     const newVehicle = await db.createVehicle({
@@ -39,11 +54,11 @@ export async function POST(req: NextRequest) {
       plate_number: plateNumber,
       model,
       image_url: imageUrl || 'https://images.unsplash.com/photo-1549399542-7e3f8b79c341?auto=format&fit=crop&q=80&w=600',
-      base_rate_per_hour: Number(baseRate || 0),
-      rate_per_km: Number(ratePerKm || 0),
-      speed_limit_kmh: Number(speedLimit || 100),
+      base_rate_per_hour: parsedBaseRate,
+      rate_per_km: parsedRatePerKm,
+      speed_limit_kmh: parsedSpeedLimit,
       speed_penalty_usdc: Number(speedPenalty || 0),
-      deposit_required: Number(deposit),
+      deposit_required: parsedDeposit,
       geofence_center_lat: Number(geofence_center_lat || 21.028511),
       geofence_center_lng: Number(geofence_center_lng || 105.804817),
       geofence_radius_meters: Number(geofence_radius_meters || 5000),

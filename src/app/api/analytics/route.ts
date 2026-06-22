@@ -1,22 +1,33 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { db } from '@/lib/supabase';
+import { isValidAddress } from '@/lib/geofence';
 
 export async function GET(req: NextRequest) {
   try {
     const { searchParams } = new URL(req.url);
     const owner = searchParams.get('owner');
 
-    if (!owner) {
-      return NextResponse.json({ error: 'Missing owner parameter' }, { status: 400 });
+    if (!owner || !isValidAddress(owner)) {
+      return NextResponse.json({ error: 'Invalid or missing owner address' }, { status: 400 });
     }
 
     const ownerAddr = owner.toLowerCase();
 
     // 1. Fetch all vehicles and filter by owner
-    const allVehicles = await db.getVehicles();
-    const ownerVehicles = allVehicles.filter(
+    let allVehicles = await db.getVehicles();
+    let ownerVehicles = allVehicles.filter(
       (v: any) => v.owner.toLowerCase() === ownerAddr
     );
+
+    if (ownerVehicles.length === 0) {
+      if ((db as any).bootstrapOwner) {
+        await (db as any).bootstrapOwner(ownerAddr);
+        allVehicles = await db.getVehicles();
+        ownerVehicles = allVehicles.filter(
+          (v: any) => v.owner.toLowerCase() === ownerAddr
+        );
+      }
+    }
 
     const vehicleIds = new Set(ownerVehicles.map((v: any) => v.id));
 
