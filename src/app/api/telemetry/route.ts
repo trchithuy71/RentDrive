@@ -1,10 +1,16 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { db } from '@/lib/supabase';
 import { updateTelemetryOnChain } from '@/lib/blockchain';
-import { haversineDistance } from '@/lib/geofence';
+import { haversineDistance, isRateLimited } from '@/lib/geofence';
+import { logger } from '@/lib/logger';
 
 export async function POST(req: NextRequest) {
   try {
+    const ip = req.headers.get('x-forwarded-for') || 'anonymous-telemetry';
+    if (isRateLimited(ip, 60, 60000)) {
+      return NextResponse.json({ error: 'Rate limit exceeded. Please wait a moment.' }, { status: 429 });
+    }
+
     const body = await req.json();
     const { rentalId, latitude, longitude, speed, odometer, crashSensor } = body;
 
@@ -102,7 +108,7 @@ export async function POST(req: NextRequest) {
       'https://agent-oracle-2.rentdrive.io/api/report',
       'https://agent-oracle-3.rentdrive.io/api/report'
     ];
-    console.log(`[Oracle Network] Forwarding telemetry report for Rental #${rentalId} to multi-oracle endpoints:`, oracleEndpoints);
+    logger.info('Forwarding telemetry report to multi-oracle endpoints', { rentalId, oracleEndpoints });
 
     // 10. Batch Settle on-chain periodically (every 5 reports) or immediately on crash
     const shouldSettle = npState.telemetryUpdateCount % 5 === 0 || updatedCrashDetected;
@@ -110,7 +116,7 @@ export async function POST(req: NextRequest) {
     let onChainUpdated = false;
 
     if (shouldSettle) {
-      console.log(`[Oracle Router] Batch limit met (${npState.telemetryUpdateCount} reports). Settling nanopayments on Arc...`);
+      logger.info('Batch limit met. Settling nanopayments on Arc...', { rentalId, telemetryUpdateCount: npState.telemetryUpdateCount });
       const odoMeters = Math.round(odometer);
       const currentSpeed = Math.round(speed);
       
@@ -127,7 +133,7 @@ export async function POST(req: NextRequest) {
         onChainUpdated = true;
         npState = await gateway.recordOnChainSettlement(Number(rentalId));
       } else {
-        console.warn(`[Oracle Router] On-chain settlement transaction failed: ${chainRes.error}`);
+        logger.warn('On-chain settlement transaction failed', { rentalId, error: chainRes.error });
       }
     }
 
@@ -151,7 +157,7 @@ export async function POST(req: NextRequest) {
       gatewayState: npState,
     });
   } catch (error: any) {
-    console.error('Telemetry reporting route error:', error);
+    logger.error('Telemetry reporting route error', error, { rentalId: req.nextUrl?.searchParams?.get('rentalId') });
     return NextResponse.json({ error: error.message || 'Server error' }, { status: 500 });
   }
 }
