@@ -16,7 +16,7 @@ export const CURRENCY_CONFIG = {
   USDC: {
     symbol: 'USDC',
     name: 'USD Coin',
-    decimals: 6,
+    decimals: 18,
     address: '0x3600000000000000000000000000000000000000',
     icon: '$',
     color: '#2775CA',
@@ -26,7 +26,7 @@ export const CURRENCY_CONFIG = {
   EURC: {
     symbol: 'EURC',
     name: 'Euro Coin',
-    decimals: 6,
+    decimals: 18,
     address: '0x89B50855Aa3bE2F677cD6303Cec089B5F319D72a',
     icon: '€',
     color: '#1A47B8',
@@ -66,7 +66,7 @@ const STABLEFX_API_BASE = 'https://api.circle.com/v1/exchange/stablefx';
  * Uses TEST key for Arc Testnet.
  */
 function getApiKey(): string | null {
-  return process.env.CIRCLE_STABLEFX_API_KEY || process.env.NEXT_PUBLIC_CIRCLE_STABLEFX_API_KEY || null;
+  return process.env.CIRCLE_STABLEFX_API_KEY || process.env.CIRCLE_API_KEY || process.env.NEXT_PUBLIC_CIRCLE_STABLEFX_API_KEY || null;
 }
 
 /**

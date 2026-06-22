@@ -95,9 +95,7 @@ export async function updateTelemetryOnChain(
 ): Promise<{ success: boolean; txHash?: string; error?: string }> {
   try {
     if (!isContractConfigured()) {
-      console.log(`[Blockchain Simulator] Simulated telemetry update for Rental #${rentalId}: Odo=${odometerMeters}m, Speed=${speedKmH}km/h, Crash=${crashDetected}, Geofence=${geofenceViolated}`);
-      const mockHash = '0x' + Array.from({ length: 64 }, () => Math.floor(Math.random() * 16).toString(16)).join('');
-      return { success: true, txHash: mockHash };
+      return { success: false, error: 'RentDrive contract address is not configured.' };
     }
 
     if (!adminWalletClient) {
@@ -165,11 +163,7 @@ export const getOracleRegistryContract = () => {
 export async function getOraclesFromRegistry(): Promise<any[]> {
   try {
     if (!ORACLE_REGISTRY_ADDRESS || ORACLE_REGISTRY_ADDRESS === '0x' || ORACLE_REGISTRY_ADDRESS.length < 40) {
-      return [
-        { address: '0xe5279cb19d8d95383c3fafa28dfb7f3d19a83634965aa86933729963b13c0340', weight: 1, reputation: 100, reports: 12, slashes: 0, active: true },
-        { address: '0x1234567890123456789012345678901234567891', weight: 1, reputation: 98, reports: 10, slashes: 0, active: true },
-        { address: '0x1234567890123456789012345678901234567892', weight: 1, reputation: 100, reports: 11, slashes: 0, active: true }
-      ];
+      return [];
     }
 
     const addresses = await publicClient.readContract({
@@ -249,14 +243,12 @@ export async function removeOracleFromRegistry(oracleAddress: string) {
  */
 export async function resolveDisputeOnChain(
   rentalId: number,
-  payoutToOwner: number, // in USDC (6 decimals)
-  refundToRenter: number // in USDC (6 decimals)
+  payoutToOwner: bigint | number, // in 18 decimals format
+  refundToRenter: bigint | number // in 18 decimals format
 ): Promise<{ success: boolean; txHash?: string; error?: string }> {
   try {
     if (!isContractConfigured()) {
-      console.log(`[Blockchain Simulator] Simulated dispute resolution for Rental #${rentalId}: PayoutToOwner=${payoutToOwner} USDC, RefundToRenter=${refundToRenter} USDC`);
-      const mockHash = '0x' + Array.from({ length: 64 }, () => Math.floor(Math.random() * 16).toString(16)).join('');
-      return { success: true, txHash: mockHash };
+      return { success: false, error: 'RentDrive contract address is not configured.' };
     }
 
     if (!adminWalletClient) {
@@ -379,9 +371,7 @@ export async function startRentalOnBehalfOnChain(
 ): Promise<{ success: boolean; txHash?: string; error?: string }> {
   try {
     if (!isContractConfigured()) {
-      console.log(`[Blockchain Simulator] startRentalOnBehalf simulated for renter ${renterAddress} on vehicle #${vehicleId}`);
-      const mockHash = '0x' + Array.from({ length: 64 }, () => Math.floor(Math.random() * 16).toString(16)).join('');
-      return { success: true, txHash: mockHash };
+      return { success: false, error: 'RentDrive contract address is not configured.' };
     }
 
     if (!adminWalletClient) {
@@ -389,9 +379,9 @@ export async function startRentalOnBehalfOnChain(
     }
 
     const tokenAddress = USDC_TOKEN_ADDRESS as Address;
-    const totalAmount = BigInt(Math.floor((depositAmount + premiumAmount) * 1e6));
+    const totalAmount = BigInt(Math.round((depositAmount + premiumAmount) * 1000000)) * BigInt("1000000000000");
 
-    console.log(`[Relayer] Approving ${totalAmount.toString()} micro-USDC (6 decimals) for RentDrive contract...`);
+    console.log(`[Relayer] Approving ${totalAmount.toString()} micro-USDC (18 decimals) for RentDrive contract...`);
     const { request: approveReq } = await publicClient.simulateContract({
       address: tokenAddress,
       abi: erc20ApproveAbi,
