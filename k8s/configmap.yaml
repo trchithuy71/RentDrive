@@ -1,0 +1,16 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: rentdrive-config
+  namespace: rentdrive
+  labels:
+    app: rentdrive
+    tier: frontend
+data:
+  NODE_ENV: "production"
+  PORT: "3000"
+  NEXT_PUBLIC_SUPABASE_URL: "https://your-supabase-project.supabase.co"
+  NEXT_PUBLIC_CIRCLE_CLIENT_URL: "https://modular-sdk.circle.com/v1/rpc/w3s/buidl"
+  ARC_TESTNET_RPC_URL: "https://rpc.testnet.arc.network"
+  NEXT_PUBLIC_USDC_TOKEN_ADDRESS: "0x3600000000000000000000000000000000000000"
+  LOG_LEVEL: "info"

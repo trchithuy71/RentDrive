@@ -1,0 +1,149 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: rentdrive-app
+  namespace: rentdrive
+  labels:
+    app: rentdrive
+    tier: frontend
+spec:
+  replicas: 2
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxSurge: 1
+      maxUnavailable: 0
+  selector:
+    matchLabels:
+      app: rentdrive
+      tier: frontend
+  template:
+    metadata:
+      labels:
+        app: rentdrive
+        tier: frontend
+    spec:
+      # Pod-level security context
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 1001
+        runAsGroup: 1001
+        fsGroup: 1001
+        seccompProfile:
+          type: RuntimeDefault
+
+      containers:
+        - name: app
+          image: rentdrive/app:latest
+          imagePullPolicy: IfNotPresent
+          ports:
+            - containerPort: 3000
+              name: http
+
+          # Container-level security hardening (least privilege)
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            privileged: false
+            capabilities:
+              drop:
+                - ALL
+
+          # Resource allocation matching staging/production standards
+          resources:
+            requests:
+              cpu: "250m"
+              memory: "512Mi"
+            limits:
+              cpu: "1000m"
+              memory: "1Gi"
+
+          # Configuration mapping
+          envFrom:
+            - configMapRef:
+                name: rentdrive-config
+          env:
+            - name: NEXT_PUBLIC_SUPABASE_ANON_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: rentdrive-secret
+                  key: NEXT_PUBLIC_SUPABASE_ANON_KEY
+            - name: CIRCLE_API_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: rentdrive-secret
+                  key: CIRCLE_API_KEY
+            - name: CIRCLE_KIT_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: rentdrive-secret
+                  key: CIRCLE_KIT_KEY
+            - name: NEXT_PUBLIC_CIRCLE_CLIENT_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: rentdrive-secret
+                  key: NEXT_PUBLIC_CIRCLE_CLIENT_KEY
+            - name: CIRCLE_ENTITY_SECRET
+              valueFrom:
+                secretKeyRef:
+                  name: rentdrive-secret
+                  key: CIRCLE_ENTITY_SECRET
+            - name: CIRCLE_APP_ID
+              valueFrom:
+                secretKeyRef:
+                  name: rentdrive-secret
+                  key: CIRCLE_APP_ID
+            - name: PRIVATE_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: rentdrive-secret
+                  key: PRIVATE_KEY
+            - name: NEXT_PUBLIC_WALLET_CONNECT_PROJECT_ID
+              valueFrom:
+                secretKeyRef:
+                  name: rentdrive-secret
+                  key: NEXT_PUBLIC_WALLET_CONNECT_PROJECT_ID
+            - name: NEXT_PUBLIC_RENTDRIVE_CONTRACT_ADDRESS
+              valueFrom:
+                secretKeyRef:
+                  name: rentdrive-secret
+                  key: NEXT_PUBLIC_RENTDRIVE_CONTRACT_ADDRESS
+                  optional: true
+
+          # Health Probes
+          startupProbe:
+            httpGet:
+              path: /api/health
+              port: 3000
+            initialDelaySeconds: 10
+            periodSeconds: 5
+            failureThreshold: 12 # Gives the app 60s to start up initially
+          livenessProbe:
+            httpGet:
+              path: /api/health
+              port: 3000
+            periodSeconds: 10
+            timeoutSeconds: 5
+            failureThreshold: 3
+          readinessProbe:
+            httpGet:
+              path: /api/health
+              port: 3000
+            periodSeconds: 10
+            timeoutSeconds: 3
+            failureThreshold: 2
+
+          # Volume mounts to support read-only filesystem restrictions
+          volumeMounts:
+            - name: next-cache
+              mountPath: /app/.next
+            - name: db-storage
+              mountPath: /app/src/contracts
+
+      volumes:
+        # Tmpfs/Memory volumes to host Next.js runtime cache directories when root is read-only
+        - name: next-cache
+          emptyDir: {}
+        # Writable directory for local JSON database fallbacks when testing without active Supabase
+        - name: db-storage
+          emptyDir: {}
