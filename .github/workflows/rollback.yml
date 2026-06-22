@@ -1,0 +1,64 @@
+name: Rollback Deployment
+
+on:
+  workflow_dispatch:
+    inputs:
+      target_env:
+        description: 'Environment to Rollback'
+        required: true
+        default: 'staging'
+        type: choice
+        options:
+          - staging
+          - production
+      rollback_action:
+        description: 'Rollback Action'
+        required: true
+        default: 'undo'
+        type: choice
+        options:
+          - undo # Undo the last deployment (revert to previous revision)
+          - redeploy_tag # Deploy a specific previous Git SHA / Docker Tag
+      target_sha:
+        description: 'Git SHA / Tag to redeploy (Only if redeploy_tag chosen)'
+        required: false
+        type: string
+
+jobs:
+  rollback:
+    name: Execute Rollback
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Configure Kubeconfig
+        run: |
+          mkdir -p ~/.kube
+          if [ "${{ github.event.inputs.target_env }}" = "production" ]; then
+            echo "${{ secrets.KUBECONFIG_PRODUCTION }}" > ~/.kube/config
+          else
+            echo "${{ secrets.KUBECONFIG_STAGING }}" > ~/.kube/config
+          fi
+          chmod 600 ~/.kube/config
+
+      # Choice 1: Undo the last deployment immediately
+      - name: Undo last deployment
+        if: github.event.inputs.rollback_action == 'undo'
+        run: |
+          echo "Executing rollback (undo) for rentdrive-app in namespace: rentdrive..."
+          kubectl rollout undo deployment/rentdrive-app -n rentdrive
+          kubectl rollout status deployment/rentdrive-app -n rentdrive --timeout=120s
+
+      # Choice 2: Redeploy a specific known-stable Docker tag/SHA
+      - name: Redeploy specific Git SHA
+        if: github.event.inputs.rollback_action == 'redeploy_tag' && github.event.inputs.target_sha != ''
+        run: |
+          echo "Redeploying specific Git SHA: ${{ github.event.inputs.target_sha }}..."
+          cd k8s
+          sed -i "s|image: rentdrive/app:latest|image: rentdrive/app:${{ github.event.inputs.target_sha }}|g" deployment.yaml
+          if [ "${{ github.event.inputs.target_env }}" = "production" ]; then
+            sed -i "s|replicas: 2|replicas: 4|g" deployment.yaml
+          fi
+          kubectl apply -f deployment.yaml
+          kubectl rollout status deployment/rentdrive-app -n rentdrive --timeout=120s

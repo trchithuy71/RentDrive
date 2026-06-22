@@ -1,0 +1,94 @@
+name: CD Pipeline - Multi-Env Deploy
+
+on:
+  push:
+    branches: [ main ]
+  workflow_dispatch:
+    inputs:
+      deploy_env:
+        description: 'Target Environment'
+        required: true
+        default: 'staging'
+        type: choice
+        options:
+          - staging
+          - production
+
+jobs:
+  deploy-staging:
+    name: Deploy to Staging
+    if: github.event.inputs.deploy_env == 'staging' || github.event_name == 'push'
+    runs-on: ubuntu-latest
+    environment: staging
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Kustomize
+        run: |
+          curl -s "https://raw.githubusercontent.com/kubernetes-sigs/kustomize/master/hack/install_kustomize.sh" | bash
+          sudo mv kustomize /usr/local/bin/
+
+      - name: Configure Kubeconfig
+        run: |
+          mkdir -p ~/.kube
+          echo "${{ secrets.KUBECONFIG_STAGING }}" > ~/.kube/config
+          chmod 600 ~/.kube/config
+
+      # Replace image tags in deployment.yaml dynamically
+      - name: Update deployment image tag
+        run: |
+          cd k8s
+          sed -i "s|image: rentdrive/app:latest|image: rentdrive/app:${{ github.sha }}|g" deployment.yaml
+
+      - name: Apply Kubernetes manifests
+        run: |
+          kubectl apply -f k8s/configmap.yaml
+          kubectl apply -f k8s/secret.yaml
+          kubectl apply -f k8s/deployment.yaml
+          kubectl apply -f k8s/service.yaml
+          kubectl apply -f k8s/ingress.yaml
+          kubectl apply -f k8s/hpa.yaml
+
+      - name: Verify Staging Rollout
+        run: |
+          kubectl rollout status deployment/rentdrive-app -n rentdrive --timeout=120s
+
+  deploy-production:
+    name: Deploy to Production
+    if: github.event.inputs.deploy_env == 'production' || (github.event_name == 'push' && github.ref == 'refs/heads/main')
+    needs: [deploy-staging]
+    runs-on: ubuntu-latest
+    environment:
+      name: production
+      url: https://rentdrive.io
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Configure Kubeconfig
+        run: |
+          mkdir -p ~/.kube
+          echo "${{ secrets.KUBECONFIG_PRODUCTION }}" > ~/.kube/config
+          chmod 600 ~/.kube/config
+
+      # Dynamic image tag update for production
+      - name: Update deployment image tag
+        run: |
+          cd k8s
+          sed -i "s|image: rentdrive/app:latest|image: rentdrive/app:${{ github.sha }}|g" deployment.yaml
+          # Adjust replica count for production target
+          sed -i "s|replicas: 2|replicas: 4|g" deployment.yaml
+
+      - name: Apply production manifests
+        run: |
+          kubectl apply -f k8s/configmap.yaml
+          kubectl apply -f k8s/secret.yaml
+          kubectl apply -f k8s/deployment.yaml
+          kubectl apply -f k8s/service.yaml
+          kubectl apply -f k8s/ingress.yaml
+          kubectl apply -f k8s/hpa.yaml
+
+      - name: Verify Production Rollout
+        run: |
+          kubectl rollout status deployment/rentdrive-app -n rentdrive --timeout=180s

@@ -1,0 +1,82 @@
+name: Build, Test & Scan
+
+on:
+  push:
+    branches: [ main, dev, staging ]
+  pull_request:
+    branches: [ main, dev, staging ]
+
+jobs:
+  lint-and-test:
+    name: Lint & Compile TS
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Lint check
+        run: npm run lint
+
+      - name: TypeScript Compile Check
+        run: npx tsc --noEmit
+
+  security-scan:
+    name: Dependency & Code Security Audit
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Audit NPM dependencies
+        run: npm audit --audit-level=high
+
+      # Static Application Security Testing (SAST) using custom/semgrep/similar
+      - name: Node security check
+        uses: snyk/actions/node@master
+        continue-on-error: true # Let snyk fail gracefully if no credentials
+        env:
+          SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
+
+  build-docker-image:
+    name: Build & Scan Docker Image
+    needs: [lint-and-test, security-scan]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@v3
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      # Build and export image to local Docker daemon to enable scanning
+      - name: Build local image for scanning
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          load: true
+          tags: rentdrive/app:${{ github.sha }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+      # Trivy scanner audits container image for OS/runtime vulnerabilities
+      - name: Run Trivy vulnerability scanner
+        uses: aquasecurity/trivy-action@master
+        with:
+          image-ref: 'rentdrive/app:${{ github.sha }}'
+          format: 'table'
+          exit-code: '1' # Fail pipeline if CRITICAL vulnerabilities are found
+          ignore-unfixed: true
+          vuln-type: 'os,library'
+          severity: 'CRITICAL'
