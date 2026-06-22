@@ -27,15 +27,16 @@ export async function POST(
     }
 
     // 2. Push dispute resolution on-chain
-    // Convert to integers / USDC format for Solidity (6 decimals)
-    const ownerPayout6 = Math.round(Number(payoutToOwner) * 1e6);
-    const renterRefund6 = Math.round(Number(refundToRenter) * 1e6);
+    // Convert to integers / USDC format for Solidity (18 decimals on Arc Testnet)
+    const ownerPayout18 = BigInt(Math.round(Number(payoutToOwner) * 1000000)) * BigInt("1000000000000");
+    const renterRefund18 = BigInt(Math.round(Number(refundToRenter) * 1000000)) * BigInt("1000000000000");
 
     console.log(`[Dispute Resolver] Resolving dispute on-chain for Rental #${rentalId}...`);
-    const chainRes = await resolveDisputeOnChain(rentalId, ownerPayout6, renterRefund6);
+    const chainRes = await resolveDisputeOnChain(rentalId, ownerPayout18, renterRefund18);
 
     if (!chainRes.success) {
-      console.warn(`[Dispute Resolver] On-chain resolution failed: ${chainRes.error}. Continuing with DB update...`);
+      console.error(`[Dispute Resolver] On-chain resolution failed: ${chainRes.error}`);
+      return NextResponse.json({ error: `On-chain dispute resolution failed: ${chainRes.error}` }, { status: 500 });
     }
 
     // 3. Update rental state in Database

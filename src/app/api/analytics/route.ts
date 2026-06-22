@@ -80,22 +80,31 @@ export async function GET(req: NextRequest) {
       }))
       .sort((a, b) => a.date.localeCompare(b.date));
 
-    // Fill in mock chart points if chartData is empty or short
+    // Fetch actual reviews to compute dynamic average rating
+    const allReviews = await db.getReviews();
+    const ownerReviews = allReviews.filter((r: any) => r.reviewee.toLowerCase() === ownerAddr);
+    const averageRating = ownerReviews.length > 0
+      ? Number((ownerReviews.reduce((sum: number, r: any) => sum + r.rating, 0) / ownerReviews.length).toFixed(1))
+      : 5.0;
+
+    // Fill in empty chart points with 0 if chartData is empty or short (no mock numbers)
     if (chartData.length < 5) {
       const now = new Date();
       for (let i = 4; i >= 0; i--) {
         const d = new Date(now);
         d.setDate(now.getDate() - i);
         const dateKey = d.toISOString().split('T')[0];
-        if (!dailyRevenueMap[dateKey]) {
+        const exists = chartData.some(item => item.date === dateKey);
+        if (!exists) {
           chartData.push({
             date: dateKey,
-            usdc: i * 12.5,
-            eurc: i * 8.2,
-            total: Number((i * 12.5 + i * 8.2 * 1.08).toFixed(2)),
+            usdc: 0,
+            eurc: 0,
+            total: 0,
           });
         }
       }
+      chartData.sort((a, b) => a.date.localeCompare(b.date));
     }
 
     // 4. Calculate Vehicle Utilization & Metrics comparison
@@ -140,8 +149,6 @@ export async function GET(req: NextRequest) {
         speedViolations,
       };
     });
-
-    const averageRating = 4.8; // Standard default
 
     return NextResponse.json({
       success: true,
