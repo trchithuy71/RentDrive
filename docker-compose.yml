@@ -1,0 +1,105 @@
+version: '3.8'
+
+services:
+  # Next.js Application
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: rentdrive/app:latest
+    container_name: rentdrive-app
+    ports:
+      - "3000:3000"
+    environment:
+      - NODE_ENV=production
+      - PORT=3000
+      - NEXT_PUBLIC_SUPABASE_URL=http://db:5432
+      - NEXT_PUBLIC_SUPABASE_ANON_KEY=${NEXT_PUBLIC_SUPABASE_ANON_KEY:-local-anon-key}
+      - CIRCLE_API_KEY=${CIRCLE_API_KEY:-local-circle-key}
+      - CIRCLE_KIT_KEY=${CIRCLE_KIT_KEY:-local-kit-key}
+      - NEXT_PUBLIC_CIRCLE_CLIENT_KEY=${NEXT_PUBLIC_CIRCLE_CLIENT_KEY:-local-client-key}
+      - NEXT_PUBLIC_CIRCLE_CLIENT_URL=https://modular-sdk.circle.com/v1/rpc/w3s/buidl
+      - CIRCLE_ENTITY_SECRET=${CIRCLE_ENTITY_SECRET:-0000000000000000000000000000000000000000000000000000000000000000}
+      - CIRCLE_APP_ID=${CIRCLE_APP_ID:-local-app-id}
+      - PRIVATE_KEY=${PRIVATE_KEY:-0000000000000000000000000000000000000000000000000000000000000000}
+      - ARC_TESTNET_RPC_URL=https://rpc.testnet.arc.network
+      - NEXT_PUBLIC_USDC_TOKEN_ADDRESS=0x3600000000000000000000000000000000000000
+      - NEXT_PUBLIC_WALLET_CONNECT_PROJECT_ID=${NEXT_PUBLIC_WALLET_CONNECT_PROJECT_ID:-local-walletconnect-id}
+      - NEXT_PUBLIC_RENTDRIVE_CONTRACT_ADDRESS=${NEXT_PUBLIC_RENTDRIVE_CONTRACT_ADDRESS:-0x0000000000000000000000000000000000000000}
+      - LOG_LEVEL=info
+    depends_on:
+      db:
+        condition: service_healthy
+    restart: always
+    healthcheck:
+      test: ["CMD-SHELL", "wget --no-verbose --tries=1 --spider http://localhost:3000/api/health || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+      start_period: 15s
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+  # PostgreSQL Database (to emulate Supabase tables in dev/staging environments)
+  db:
+    image: postgres:15-alpine
+    container_name: rentdrive-db
+    ports:
+      - "5432:5432"
+    environment:
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=postgres
+      - POSTGRES_DB=rentdrive
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+      - ./src/contracts/supabase_schema.sql:/docker-entrypoint-initdb.d/init.sql
+    restart: always
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d rentdrive"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+  # Prometheus (Observability)
+  prometheus:
+    image: prom/prometheus:v2.45.0
+    container_name: rentdrive-prometheus
+    volumes:
+      - ./monitoring/prometheus.yml:/etc/prometheus/prometheus.yml
+      - prometheus_data:/prometheus
+    ports:
+      - "9090:9090"
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+      - '--storage.tsdb.path=/prometheus'
+      - '--web.console.libraries=/usr/share/prometheus/console_libraries'
+      - '--web.console.templates=/usr/share/prometheus/consoles'
+    restart: always
+
+  # Grafana (Observability Dashboard)
+  grafana:
+    image: grafana/grafana:10.0.0
+    container_name: rentdrive-grafana
+    volumes:
+      - grafana_data:/var/lib/grafana
+    ports:
+      - "3001:3000"
+    environment:
+      - GF_SECURITY_ADMIN_PASSWORD=admin
+      - GF_USERS_ALLOW_SIGN_UP=false
+    restart: always
+    depends_on:
+      - prometheus
+
+volumes:
+  pgdata:
+  prometheus_data:
+  grafana_data:
