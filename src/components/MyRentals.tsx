@@ -48,19 +48,19 @@ function ActiveRentalCard({
   const geofencePenaltiesVal = onChainRental ? (onChainRental as any)[10] : undefined;
 
   const displayEscrow = escrowVal !== undefined 
-    ? Number(formatUnits(escrowVal as bigint, 6)).toFixed(2) 
+    ? Number(formatUnits(escrowVal as bigint, 18)).toFixed(2) 
     : Number(rental.escrow_balance).toFixed(2);
 
   const displaySpeedPenalties = speedPenaltiesVal !== undefined 
-    ? Number(formatUnits(speedPenaltiesVal as bigint, 6)).toFixed(2) 
+    ? Number(formatUnits(speedPenaltiesVal as bigint, 18)).toFixed(2) 
     : Number(rental.speed_penalties_accrued).toFixed(2);
 
   const displayDistanceCharges = distanceChargesVal !== undefined 
-    ? Number(formatUnits(distanceChargesVal as bigint, 6)).toFixed(2) 
+    ? Number(formatUnits(distanceChargesVal as bigint, 18)).toFixed(2) 
     : Number(rental.distance_charges_accrued).toFixed(2);
 
   const displayGeofencePenalties = geofencePenaltiesVal !== undefined
-    ? Number(formatUnits(geofencePenaltiesVal as bigint, 6)).toFixed(2)
+    ? Number(formatUnits(geofencePenaltiesVal as bigint, 18)).toFixed(2)
     : Number(rental.geofence_penalties_accrued || 0).toFixed(2);
 
   const totalCost = (Number(displayDistanceCharges) + Number(displaySpeedPenalties) + Number(displayGeofencePenalties)).toFixed(2);
@@ -331,7 +331,7 @@ export default function MyRentals({ activeTab }: MyRentalsProps) {
         });
         await publicClient?.waitForTransactionReceipt({ hash: txHash });
       } else {
-        await new Promise((resolve) => setTimeout(resolve, 1500));
+        throw new Error('RentDrive smart contract is not configured or deployed.');
       }
 
       steps[0].status = 'success';

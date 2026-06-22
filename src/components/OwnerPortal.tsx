@@ -150,11 +150,11 @@ export default function OwnerPortal({ activeTab }: OwnerPortalProps) {
   });
 
   const formattedEarnings = onChainEarnings
-    ? Number(formatUnits(onChainEarnings as bigint, 6)).toFixed(2)
+    ? Number(formatUnits(onChainEarnings as bigint, 18)).toFixed(2)
     : '0.00';
 
   const formattedUsdcBalance = usdcBalance
-    ? Number(formatUnits(usdcBalance as bigint, 6)).toFixed(2)
+    ? Number(formatUnits(usdcBalance as bigint, 18)).toFixed(2)
     : '0.00';
 
   const { subscribeToEvent } = useNotifications();
@@ -297,21 +297,22 @@ export default function OwnerPortal({ activeTab }: OwnerPortalProps) {
         console.log('Listing vehicle on-chain...');
         const rentDriveArtifact = require('../contracts/RentDrive.json');
         
+        const decimals = CURRENCY_CONFIG[acceptedCurrency].decimals;
         const txHash = await writeContractAsync({
           address: contractAddress,
           abi: rentDriveArtifact.abi,
           functionName: 'listVehicle',
           args: [
-            parseUnits(baseRate, 6),
-            parseUnits(ratePerKm, 6),
+            parseUnits(baseRate, decimals),
+            parseUnits(ratePerKm, decimals),
             BigInt(speedLimit),
-            parseUnits(speedPenalty, 6),
-            parseUnits(deposit, 6),
+            parseUnits(speedPenalty, decimals),
+            parseUnits(deposit, decimals),
             `${model} | ${plateNumber} | ${imageUrl || 'https://images.unsplash.com/photo-1619767886558-efdc259cde1a?auto=format&fit=crop&q=80&w=600'}`,
             BigInt(Math.round(Number(centerLat) * 1e6)),
             BigInt(Math.round(Number(centerLng) * 1e6)),
             BigInt(radiusMeters),
-            parseUnits(geofencePenalty, 6),
+            parseUnits(geofencePenalty, decimals),
             CURRENCY_CONFIG[acceptedCurrency].address,
           ],
         }, { txName: 'List Vehicle' });
@@ -322,7 +323,7 @@ export default function OwnerPortal({ activeTab }: OwnerPortalProps) {
         });
         await publicClient?.waitForTransactionReceipt({ hash: txHash });
       } else {
-        await new Promise((resolve) => setTimeout(resolve, 1500));
+        throw new Error('RentDrive smart contract is not configured or deployed.');
       }
 
       steps[0].status = 'success';
@@ -513,7 +514,7 @@ export default function OwnerPortal({ activeTab }: OwnerPortalProps) {
     setWithdrawingPool(true);
     showModal({ type: 'loading', title: 'WITHDRAWING POOL FUNDS', message: `Transferring ${amt} USDC from Insurance Pool to your admin address...`, preventClose: true });
     try {
-      const parsedAmt = parseUnits(withdrawAmount, 6);
+      const parsedAmt = parseUnits(withdrawAmount, 18);
       const txHash = await writeContractAsync({
         address: poolAddress,
         abi: poolArtifact.abi,
@@ -674,19 +675,19 @@ export default function OwnerPortal({ activeTab }: OwnerPortalProps) {
                 <div>
                   <span className="block text-[#718096] font-bold text-[9px] tracking-wider uppercase mb-1">Pool Balance</span>
                   <span className="text-[#1C2B3C] font-black text-lg">
-                    {poolBalance !== undefined ? Number(formatUnits(poolBalance as bigint, 6)).toFixed(2) : '0.00'} USDC
+                    {poolBalance !== undefined ? Number(formatUnits(poolBalance as bigint, 18)).toFixed(2) : '0.00'} USDC
                   </span>
                 </div>
                 <div>
                   <span className="block text-[#718096] font-bold text-[9px] tracking-wider uppercase mb-1">Total Premiums</span>
                   <span className="text-[#1C2B3C] font-extrabold text-lg">
-                    {totalPremiums !== undefined ? Number(formatUnits(totalPremiums as bigint, 6)).toFixed(2) : '0.00'} USDC
+                    {totalPremiums !== undefined ? Number(formatUnits(totalPremiums as bigint, 18)).toFixed(2) : '0.00'} USDC
                   </span>
                 </div>
                 <div>
                   <span className="block text-[#718096] font-bold text-[9px] tracking-wider uppercase mb-1">Minimum Reserve</span>
                   <span className="text-amber-700 font-extrabold text-lg">
-                    {totalPremiums !== undefined ? (Number(formatUnits(totalPremiums as bigint, 6)) * 0.1).toFixed(2) : '0.00'} USDC
+                    {totalPremiums !== undefined ? (Number(formatUnits(totalPremiums as bigint, 18)) * 0.1).toFixed(2) : '0.00'} USDC
                   </span>
                 </div>
               </div>

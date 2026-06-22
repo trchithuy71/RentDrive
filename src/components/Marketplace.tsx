@@ -240,7 +240,8 @@ export default function Marketplace({ onRentalStarted }: MarketplaceProps) {
         const tokenAddress = vehicleCurrency === 'EURC' ? eurcAddress : usdcAddress;
         const premiumAmount = (Number(vehicle.deposit_required) * Number(premiumRateBps || 500)) / 10_000;
         const totalAmount = Number(vehicle.deposit_required) + premiumAmount;
-        const depositAmount = parseUnits(totalAmount.toFixed(6), 6);
+        const decimals = CURRENCY_CONFIG[vehicleCurrency as CurrencySymbol]?.decimals || 18;
+        const depositAmount = parseUnits(totalAmount.toFixed(decimals), decimals);
         
         console.log(`Approving ${totalAmount.toFixed(2)} ${vehicleCurrency} to RentDrive Contract: ${contractAddress}`);
         const approveHash = await writeContractAsync({
@@ -281,20 +282,7 @@ export default function Marketplace({ onRentalStarted }: MarketplaceProps) {
 
         await publicClient?.waitForTransactionReceipt({ hash: rentHash });
       } else {
-        // Simulated local execution
-        await new Promise((resolve) => setTimeout(resolve, 1500));
-        steps[0].status = 'success';
-        steps[1].status = 'pending';
-        updateModal({
-          txSteps: [...steps],
-        });
-
-        await new Promise((resolve) => setTimeout(resolve, 1500));
-        const mockHash = '0x' + Array.from({ length: 64 }, () => Math.floor(Math.random() * 16).toString(16)).join('');
-        setTxHash(mockHash);
-        updateModal({
-          txHash: mockHash,
-        });
+        throw new Error('RentDrive smart contract is not configured or deployed.');
       }
 
       // Update to register in database step
