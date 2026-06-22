@@ -109,12 +109,13 @@ export default function Simulator() {
 
   useEffect(() => {
     fetchRentals();
-  }, []);
+  }, [address]);
 
   const fetchRentals = async () => {
     try {
+      const url = address ? `/api/rentals?renter=${address}` : '/api/rentals';
       const [rentalsRes, vehiclesRes] = await Promise.all([
-        fetch('/api/rentals'),
+        fetch(url),
         fetch('/api/vehicles')
       ]);
       const rData = await rentalsRes.json();
@@ -267,7 +268,7 @@ export default function Simulator() {
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
           
           {/* Controls Column */}
-          <div className="space-y-6 rounded-sm border border-[#E0DDD5] bg-white p-8">
+          <div className="space-y-6 rounded-sm border border-[#E0DDD5] bg-white p-6 sm:p-8">
             <h3 className="text-xs font-bold uppercase tracking-widest text-[#1C2B3C] flex items-center gap-2 pb-3 border-b border-[#F2F1EC]">
               <Orbit className="h-4 w-4 text-[#1C2B3C]" /> TELEMETRY MODULE
             </h3>
@@ -408,7 +409,7 @@ export default function Simulator() {
             </div>
 
             {/* Switches */}
-            <div className="border-t border-[#F2F1EC] pt-5 flex gap-3">
+            <div className="border-t border-[#F2F1EC] pt-5 flex flex-col sm:flex-row gap-3">
               <button
                 type="button"
                 onClick={() => setIsDriving(!isDriving)}
@@ -484,23 +485,23 @@ export default function Simulator() {
                 <span className="block text-[9px] text-[#718096] font-bold uppercase tracking-widest pb-1 border-b border-[#F2F1EC]">
                   ACTIVE GEOFENCE DETAILS
                 </span>
-                <div className="flex justify-between uppercase">
+                <div className="flex flex-col sm:flex-row sm:justify-between uppercase gap-1 sm:gap-2">
                   <span className="text-[#718096]">Boundary Center:</span>
-                  <span>{centerLat.toFixed(6)}, {centerLng.toFixed(6)}</span>
+                  <span className="font-mono text-[10px] sm:text-xs text-right sm:text-left">{centerLat.toFixed(6)}, {centerLng.toFixed(6)}</span>
                 </div>
-                <div className="flex justify-between uppercase">
+                <div className="flex flex-col sm:flex-row sm:justify-between uppercase gap-1 sm:gap-2">
                   <span className="text-[#718096]">Permitted Radius:</span>
                   <span>{radiusMeters} meters</span>
                 </div>
-                <div className="flex justify-between uppercase">
+                <div className="flex flex-col sm:flex-row sm:justify-between uppercase gap-1 sm:gap-2">
                   <span className="text-[#718096]">Distance to Center:</span>
-                  <span className={isInsideGeofence ? 'text-emerald-600' : 'text-red-600 font-extrabold animate-pulse'}>
+                  <span className={`${isInsideGeofence ? 'text-emerald-600' : 'text-red-600 font-extrabold animate-pulse'} text-right sm:text-left`}>
                     {currentDistance.toFixed(0)} meters
                   </span>
                 </div>
-                <div className="flex justify-between uppercase border-t border-[#F2F1EC] pt-2">
+                <div className="flex flex-col sm:flex-row sm:justify-between uppercase gap-1 sm:gap-2 border-t border-[#F2F1EC] pt-2">
                   <span className="text-[#718096]">Out-Of-Bounds Penalty:</span>
-                  <span className="text-red-600 font-extrabold">{violationPenalty} USDC per report</span>
+                  <span className="text-red-600 font-extrabold text-right sm:text-left">{violationPenalty} USDC per report</span>
                 </div>
               </div>
             )}
@@ -532,8 +533,8 @@ export default function Simulator() {
                 </div>
               </div>
 
-              <div className="flex justify-between items-center text-[9px] text-[#718096] border-t border-[#F2F1EC] pt-3">
-                <div className="flex flex-col">
+              <div className="flex flex-col sm:flex-row gap-3 sm:justify-between sm:items-center text-[9px] text-[#718096] border-t border-[#F2F1EC] pt-3">
+                <div className="flex flex-col gap-0.5">
                   <span>Batch Status: {updatesCount % 5}/5 to auto-settle</span>
                   <span>Total Updates: {updatesCount} · Total Settled: {settlementsCount}</span>
                 </div>
@@ -566,7 +567,7 @@ export default function Simulator() {
                     }
                   }}
                   disabled={submitting || updatesCount === 0}
-                  className="rounded-sm border border-[#DDDCD4] bg-white hover:bg-[#F2F1EC] px-3 py-1.5 text-[8.5px] font-black uppercase text-[#1C2B3C] tracking-widest transition-all"
+                  className="w-full sm:w-auto text-center rounded-sm border border-[#DDDCD4] bg-white hover:bg-[#F2F1EC] px-3 py-2 text-[8.5px] font-black uppercase text-[#1C2B3C] tracking-widest transition-all"
                 >
                   Settle Batch On-Chain
                 </button>

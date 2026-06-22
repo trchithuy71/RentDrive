@@ -18,7 +18,11 @@ export default function ModalPlayground() {
         label: 'DISCONNECT',
         variant: 'destructive',
         onClick: () => {
-          alert('Wallet disconnected successfully.');
+          showModal({
+            type: 'success',
+            title: 'SESSION TERMINATED',
+            message: 'Your active wallet session has been successfully closed.',
+          });
         },
       },
       secondaryAction: {

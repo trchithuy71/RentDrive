@@ -1,26 +1,8 @@
 'use client';
 
-import React, { createContext, useContext, useState, ReactNode, useCallback } from 'react';
-
-export type ModalType =
-  | 'confirm'
-  | 'loading'
-  | 'success'
-  | 'error'
-  | 'warning'
-  | 'transaction'
-  | 'custom';
-
-export interface ModalAction {
-  label: string;
-  onClick: () => void | Promise<void>;
-  variant?: 'primary' | 'secondary' | 'destructive';
-}
-
-export interface TransactionStep {
-  label: string;
-  status: 'idle' | 'pending' | 'success' | 'failed';
-}
+import React, { createContext, useContext, useState, ReactNode, useCallback, useEffect } from 'react';
+import { ModalInstance, ModalType, ModalAction, TransactionStep, ModalPriority } from '@/components/ui/modal/types';
+import { modalManager } from '@/components/ui/modal/modal-manager';
 
 export interface ModalOptions {
   type: ModalType;
@@ -33,72 +15,113 @@ export interface ModalOptions {
   txSteps?: TransactionStep[];
   autoCloseMs?: number;
   preventClose?: boolean;
+  priority?: ModalPriority;
 }
 
 interface ModalContextType {
   isOpen: boolean;
-  options: ModalOptions | null;
+  options: ModalOptions | null; // Legacy support
+  activeModal: ModalInstance | null;
+  stack: ModalInstance[];
   showModal: (opts: ModalOptions) => void;
   updateModal: (opts: Partial<ModalOptions>) => void;
   hideModal: () => void;
+  pushModal: (opts: Omit<ModalInstance, 'id' | 'createdAt'>) => string;
+  replaceModal: (opts: Omit<ModalInstance, 'id' | 'createdAt'>) => string;
+  closeAll: () => void;
 }
 
 const ModalContext = createContext<ModalContextType | undefined>(undefined);
 
 export function ModalProvider({ children }: { children: ReactNode }) {
-  const [isOpen, setIsOpen] = useState(false);
-  const [options, setOptions] = useState<ModalOptions | null>(null);
-  const [timeoutId, setTimeoutId] = useState<NodeJS.Timeout | null>(null);
+  const [activeModal, setActiveModal] = useState<ModalInstance | null>(null);
+  const [stack, setStack] = useState<ModalInstance[]>([]);
+
+  useEffect(() => {
+    // Synchronize React state with the class-based central ModalManager
+    const unsubscribe = modalManager.subscribe(({ stack: newStack, active }) => {
+      setStack(newStack);
+      setActiveModal(active);
+    });
+
+    return () => unsubscribe();
+  }, []);
 
   const hideModal = useCallback(() => {
-    setIsOpen(false);
-    if (timeoutId) {
-      clearTimeout(timeoutId);
-      setTimeoutId(null);
-    }
-  }, [timeoutId]);
+    modalManager.close();
+  }, []);
 
   const showModal = useCallback((opts: ModalOptions) => {
-    if (timeoutId) {
-      clearTimeout(timeoutId);
-      setTimeoutId(null);
-    }
-
-    setOptions(opts);
-    setIsOpen(true);
-
-    if (opts.autoCloseMs) {
-      const id = setTimeout(() => {
-        setIsOpen(false);
-      }, opts.autoCloseMs);
-      setTimeoutId(id);
-    }
-  }, [timeoutId]);
+    modalManager.open({
+      type: opts.type,
+      title: opts.title,
+      message: opts.message,
+      customContent: opts.customContent,
+      primaryAction: opts.primaryAction,
+      secondaryAction: opts.secondaryAction,
+      txHash: opts.txHash,
+      txSteps: opts.txSteps,
+      autoCloseMs: opts.autoCloseMs,
+      preventClose: opts.preventClose,
+      priority: opts.priority || 'P2_IMPORTANT',
+    });
+  }, []);
 
   const updateModal = useCallback((newOpts: Partial<ModalOptions>) => {
-    setOptions((prev) => {
-      if (!prev) return null;
-      const updated = { ...prev, ...newOpts };
-      
-      // Handle auto-close reset on updates
-      if (timeoutId) {
-        clearTimeout(timeoutId);
-        setTimeoutId(null);
+    const active = modalManager.getActive();
+    if (!active) return;
+    
+    modalManager.replaceActive({
+      ...active,
+      ...newOpts,
+    } as ModalInstance);
+  }, []);
+
+  const pushModal = useCallback((opts: Omit<ModalInstance, 'id' | 'createdAt'>) => {
+    return modalManager.open(opts);
+  }, []);
+
+  const replaceModal = useCallback((opts: Omit<ModalInstance, 'id' | 'createdAt'>) => {
+    return modalManager.replaceActive(opts);
+  }, []);
+
+  const closeAll = useCallback(() => {
+    modalManager.closeAll();
+  }, []);
+
+  // Map activeModal to options for backward compatibility
+  const options: ModalOptions | null = activeModal
+    ? {
+        type: activeModal.type,
+        title: activeModal.title,
+        message: activeModal.message,
+        customContent: activeModal.customContent,
+        primaryAction: activeModal.primaryAction,
+        secondaryAction: activeModal.secondaryAction,
+        txHash: activeModal.txHash,
+        txSteps: activeModal.txSteps,
+        autoCloseMs: activeModal.autoCloseMs,
+        preventClose: activeModal.preventClose,
       }
-      
-      if (updated.autoCloseMs) {
-        const id = setTimeout(() => {
-          setIsOpen(false);
-        }, updated.autoCloseMs);
-        setTimeoutId(id);
-      }
-      
-      return updated;
-    });
-  }, [timeoutId]);
+    : null;
+
+  const isOpen = activeModal !== null;
 
   return (
-    <ModalContext.Provider value={{ isOpen, options, showModal, updateModal, hideModal }}>
+    <ModalContext.Provider
+      value={{
+        isOpen,
+        options,
+        activeModal,
+        stack,
+        showModal,
+        updateModal,
+        hideModal,
+        pushModal,
+        replaceModal,
+        closeAll,
+      }}
+    >
       {children}
     </ModalContext.Provider>
   );
@@ -111,3 +134,4 @@ export function useModal() {
   }
   return context;
 }
+export type { ModalType, ModalAction, TransactionStep };

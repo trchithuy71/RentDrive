@@ -1,100 +1,77 @@
-'use client';
+import React from 'react';
+import type { Metadata } from 'next';
+import PageLayout from '@/components/PageLayout';
+import LandingPageWrapper from './LandingPageWrapper';
 
-import React, { useState } from 'react';
-import Navbar from '@/components/Navbar';
-import LandingPage from '@/components/LandingPage';
-import DocsPage from '@/components/DocsPage';
-import FAQPage from '@/components/FAQPage';
-import AboutPage from '@/components/AboutPage';
-import ContactPage from '@/components/ContactPage';
-import LegalPages from '@/components/LegalPages';
-import Marketplace from '@/components/Marketplace';
-import MyRentals from '@/components/MyRentals';
-import OwnerPortal from '@/components/OwnerPortal';
-import SwapConsole from '@/components/SwapConsole';
-import AgentOS from '@/components/AgentOS';
-import dynamic from 'next/dynamic';
+export const metadata: Metadata = {
+  metadataBase: new URL('https://rentdrive.io'),
+  title: 'RentDrive - P2P Telematics Escrow & Vehicle Sharing',
+  description: 'Decentralized peer-to-peer vehicle sharing platform with real-time telematics escrow protection on the Arc Network.',
+  keywords: ['P2P Car Sharing', 'Telematics Escrow', 'Web3 Car Rental', 'Circle Nanopayments', 'USDC Smart Contract', 'Arc Network'],
+  alternates: {
+    canonical: '/',
+  },
+  openGraph: {
+    title: 'RentDrive - P2P Telematics Escrow & Vehicle Sharing',
+    description: 'Decentralized peer-to-peer vehicle sharing platform with real-time telematics escrow protection on the Arc Network.',
+    url: 'https://rentdrive.io',
+    siteName: 'RentDrive',
+    locale: 'en_US',
+    type: 'website',
+    images: [
+      {
+        url: '/og-image.png',
+        width: 1200,
+        height: 630,
+        alt: 'RentDrive P2P Telematics Escrow platform',
+      },
+    ],
+  },
+  twitter: {
+    card: 'summary_large_image',
+    title: 'RentDrive - P2P Telematics Escrow & Vehicle Sharing',
+    description: 'Decentralized peer-to-peer vehicle sharing platform with real-time telematics escrow protection on the Arc Network.',
+    images: ['/og-image.png'],
+    creator: '@rentdrive_io',
+  },
+};
 
-const Simulator = dynamic(() => import('@/components/Simulator'), {
-  ssr: false,
-  loading: () => (
-    <div className="text-center py-24 border border-dashed border-[#DDDCD4] bg-[#EAE8E1]/30 rounded-sm font-bold uppercase tracking-widest text-[#718096] text-xs">
-      Loading Telematics Simulator Component...
-    </div>
-  )
-});
-
-export default function Home() {
-  const [currentView, setCurrentView] = useState('landing');
-  const [dappTab, setDappTab] = useState('marketplace');
+export default function HomePage() {
+  const jsonLd = [
+    {
+      '@context': 'https://schema.org',
+      '@type': 'WebSite',
+      'name': 'RentDrive',
+      'url': 'https://rentdrive.io',
+      'potentialAction': {
+        '@type': 'SearchAction',
+        'target': 'https://rentdrive.io/docs?q={search_term_string}',
+        'query-input': 'required name=search_term_string'
+      }
+    },
+    {
+      '@context': 'https://schema.org',
+      '@type': 'SoftwareApplication',
+      'name': 'RentDrive Protocol',
+      'operatingSystem': 'Web',
+      'applicationCategory': 'BusinessApplication, FinanceApplication',
+      'offers': {
+        '@type': 'Offer',
+        'price': '0',
+        'priceCurrency': 'USD'
+      }
+    }
+  ];
 
   return (
-    <div className="min-h-screen bg-[#F2F1EC] text-[#18222F] flex flex-col">
-      {/* Shared Unified Navbar */}
-      <Navbar 
-        currentView={currentView} 
-        setCurrentView={setCurrentView} 
-        dappTab={dappTab} 
-        setDappTab={setDappTab} 
+    <>
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
       />
-
-      {/* Main View Router */}
-      <main className="flex-1 w-full max-w-7xl mx-auto py-6">
-        {currentView === 'landing' && (
-          <LandingPage 
-            onLaunchApp={() => setCurrentView('app')} 
-            onNavigate={setCurrentView} 
-          />
-        )}
-        {currentView === 'docs' && <DocsPage />}
-        {currentView === 'faq' && <FAQPage />}
-        {currentView === 'about' && <AboutPage />}
-        {currentView === 'contact' && <ContactPage />}
-        {currentView === 'privacy' && <LegalPages />}
-        {currentView === 'terms' && <LegalPages />}
-
-        {currentView === 'app' && (
-          <>
-            {dappTab === 'marketplace' && (
-              <Marketplace onRentalStarted={() => setDappTab('rentals')} />
-            )}
-            {dappTab === 'agent' && (
-              <AgentOS />
-            )}
-            {dappTab === 'swap' && (
-              <SwapConsole />
-            )}
-            {dappTab === 'rentals' && (
-              <MyRentals activeTab={dappTab} />
-            )}
-            {dappTab === 'owner' && (
-              <OwnerPortal activeTab={dappTab} />
-            )}
-            {dappTab === 'simulator' && (
-              <Simulator />
-            )}
-          </>
-        )}
-      </main>
-
-      {/* Elegant minimalist Footer */}
-      <footer className="border-t border-[#E0DDD5] bg-[#EAE8E1] py-10 text-center text-[10px] text-[#718096] font-bold uppercase tracking-widest">
-        <div className="mx-auto max-w-7xl px-6 flex flex-col md:flex-row items-center justify-between gap-6">
-          <div className="flex flex-col md:flex-row items-center gap-2 md:gap-6">
-            <span>© 2026 RENTDRIVE · ALL RIGHTS RESERVED.</span>
-            <div className="flex gap-3">
-              <button onClick={() => setCurrentView('privacy')} className="hover:text-[#1C2B3C] transition-colors">PRIVACY POLICY</button>
-              <span>·</span>
-              <button onClick={() => setCurrentView('terms')} className="hover:text-[#1C2B3C] transition-colors">TERMS OF SERVICE</button>
-            </div>
-          </div>
-          <div className="flex gap-4">
-            <a href="https://testnet.arcscan.app" target="_blank" rel="noreferrer" className="hover:text-[#1C2B3C] transition-colors">ARC SCAN EXPLORER</a>
-            <span>·</span>
-            <a href="https://faucet.circle.com" target="_blank" rel="noreferrer" className="hover:text-[#1C2B3C] transition-colors">CIRCLE FAUCET</a>
-          </div>
-        </div>
-      </footer>
-    </div>
+      <PageLayout currentView="landing">
+        <LandingPageWrapper />
+      </PageLayout>
+    </>
   );
 }

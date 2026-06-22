@@ -255,9 +255,9 @@ export default function MyRentals({ activeTab }: MyRentalsProps) {
   const fetchData = async () => {
     try {
       const [rentalsRes, vehiclesRes, reviewsRes] = await Promise.all([
-        fetch('/api/rentals'),
+        fetch(`/api/rentals?renter=${address}`),
         fetch('/api/vehicles'),
-        fetch('/api/reviews'),
+        fetch(`/api/reviews?userAddress=${address}`),
       ]);
       const rentalsData = await rentalsRes.json();
       const vehiclesData = await vehiclesRes.json();
@@ -484,7 +484,7 @@ export default function MyRentals({ activeTab }: MyRentalsProps) {
               <div className="overflow-x-auto rounded-sm border border-[#E0DDD5] bg-white">
                 <table className="w-full text-left border-collapse text-xs">
                   <thead>
-                    <tr className="border-b border-[#E0DDD5] bg-[#F2F1EC] text-[#718096] text-[9px] font-bold tracking-widest uppercase">
+                    <tr className="border-b border-[#E0DDD5] bg-[#F2F1EC] text-[#718096] text-[9px] font-bold tracking-widest uppercase whitespace-nowrap">
                       <th className="p-4">VEHICLE SPECIFICATION</th>
                       <th className="p-4">START TIMEFRAME</th>
                       <th className="p-4">DISTANCE SUM</th>
@@ -493,7 +493,7 @@ export default function MyRentals({ activeTab }: MyRentalsProps) {
                       <th className="p-4">FEEDBACK</th>
                     </tr>
                   </thead>
-                  <tbody className="divide-y divide-[#F2F1EC] text-[#1C2B3C] font-medium">
+                  <tbody className="divide-y divide-[#F2F1EC] text-[#1C2B3C] font-medium whitespace-nowrap">
                     {pastRentals.map((rental) => {
                       const vehicle = vehicles.find((v) => v.id === rental.vehicle_id);
                       return (
