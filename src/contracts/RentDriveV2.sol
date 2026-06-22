@@ -58,7 +58,7 @@ contract RentDriveV2 {
 
     event TelemetryReportSubmitted(uint256 indexed rentalId, uint256 indexed cycle, address indexed reporter, bytes32 reportHash);
 
-    uint256 public constant MAX_DEPOSIT = 10_000_000_000; // 10,000 USDC (6 decimals)
+    uint256 public constant MAX_DEPOSIT = 10_000 * 10**18; // 10,000 USDC (18 decimals)
     uint256 public constant MAX_FEE_BPS = 1000; // 10% max platform fee
 
     struct Vehicle {
