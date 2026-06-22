@@ -1,0 +1,52 @@
+groups:
+  - name: RentDriveAlerts
+    rules:
+      # Alert for service downtime
+      - alert: InstanceDown
+        expr: up{job="rentdrive-app"} == 0
+        for: 30s
+        labels:
+          severity: critical
+        annotations:
+          summary: "RentDrive app instance down"
+          description: "RentDrive container on {{ $labels.instance }} has been offline for more than 30 seconds."
+
+      # Alert for high HTTP 5xx error rate
+      - alert: HighHttp5xxErrorRate
+        expr: rate(rentdrive_http_requests_total{status=~"5.."}[1m]) > 0.05
+        for: 1m
+        labels:
+          severity: critical
+        annotations:
+          summary: "High HTTP 5xx error rate"
+          description: "RentDrive application error rate is {{ $value | printf \"%.2f\" }} requests/sec, exceeding 5% thresholds."
+
+      # Alert for high memory usage
+      - alert: HighMemoryUsage
+        expr: rentdrive_memory_rss_bytes / 1024 / 1024 > 768
+        for: 2m
+        labels:
+          severity: warning
+        annotations:
+          summary: "High memory utilization detected"
+          description: "RentDrive RSS memory is at {{ $value | printf \"%.0f\" }} MB, approaching 1GB container limits."
+
+      # Alert for long database query durations
+      - alert: DatabaseSlowResponse
+        expr: rentdrive_db_query_duration_seconds{quantile="0.9"} > 2.0
+        for: 1m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Database queries are running slow"
+          description: "90th percentile database query duration is {{ $value }}s, exceeding 2s SLA."
+
+      # Alert for blockchain RPC latency
+      - alert: ArcRpcHighLatency
+        expr: rentdrive_rpc_request_duration_seconds > 5.0
+        for: 1m
+        labels:
+          severity: critical
+        annotations:
+          summary: "Arc Testnet RPC latency high"
+          description: "Arc blockchain RPC request times have exceeded 5.0s, stalling settlement pipelines."
