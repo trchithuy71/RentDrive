@@ -48,19 +48,19 @@ function ActiveRentalCard({
   const geofencePenaltiesVal = onChainRental ? (onChainRental as any)[10] : undefined;
 
   const displayEscrow = escrowVal !== undefined 
-    ? Number(formatUnits(escrowVal as bigint, 18)).toFixed(2) 
+    ? Number(formatUnits(escrowVal as bigint, 6)).toFixed(2) 
     : Number(rental.escrow_balance).toFixed(2);
 
   const displaySpeedPenalties = speedPenaltiesVal !== undefined 
-    ? Number(formatUnits(speedPenaltiesVal as bigint, 18)).toFixed(2) 
+    ? Number(formatUnits(speedPenaltiesVal as bigint, 6)).toFixed(2) 
     : Number(rental.speed_penalties_accrued).toFixed(2);
 
   const displayDistanceCharges = distanceChargesVal !== undefined 
-    ? Number(formatUnits(distanceChargesVal as bigint, 18)).toFixed(2) 
+    ? Number(formatUnits(distanceChargesVal as bigint, 6)).toFixed(2) 
     : Number(rental.distance_charges_accrued).toFixed(2);
 
   const displayGeofencePenalties = geofencePenaltiesVal !== undefined
-    ? Number(formatUnits(geofencePenaltiesVal as bigint, 18)).toFixed(2)
+    ? Number(formatUnits(geofencePenaltiesVal as bigint, 6)).toFixed(2)
     : Number(rental.geofence_penalties_accrued || 0).toFixed(2);
 
   const totalCost = (Number(displayDistanceCharges) + Number(displaySpeedPenalties) + Number(displayGeofencePenalties)).toFixed(2);
@@ -70,8 +70,8 @@ function ActiveRentalCard({
 
   return (
     <div
-      className={`relative rounded-sm border bg-white p-6 transition-all duration-300 ${
-        isDisputed ? 'border-red-400' : 'border-[#E0DDD5]'
+      className={`relative rounded-sm border bg-white p-6 premium-hover-card ${
+        isDisputed ? 'border-red-400 hover:border-red-500!' : 'border-[#E0DDD5]'
       }`}
     >
       <div className="flex justify-between items-start mb-6">
@@ -410,7 +410,7 @@ export default function MyRentals({ activeTab }: MyRentalsProps) {
 
   if (!isConnected) {
     return (
-      <div className="mx-auto max-w-lg px-6 py-24 text-center">
+      <div className="mx-auto max-w-lg px-6 py-24 text-center animate-fade-in">
         <div className="rounded-sm border border-[#E0DDD5] bg-white p-10 shadow-sm">
           <BadgeAlert className="mx-auto h-12 w-12 text-[#5A6573] mb-5" />
           <h2 className="text-sm font-black tracking-widest text-[#1C2B3C] uppercase mb-3">CONNECT WALLET REQUIRED</h2>
@@ -427,7 +427,7 @@ export default function MyRentals({ activeTab }: MyRentalsProps) {
 
   return (
     <PullToRefresh onRefresh={async () => { await fetchData(); }}>
-      <div className="mx-auto max-w-7xl px-6 py-10">
+      <div className="mx-auto max-w-7xl px-6 py-10 animate-fade-in">
       <div className="flex items-center justify-between mb-8 pb-3 border-b border-[#E0DDD5]">
         <h2 className="text-sm font-bold uppercase tracking-widest text-[#1C2B3C] flex items-center gap-2.5">
           <Clock className="h-4 w-4 text-[#1C2B3C]" />
@@ -481,54 +481,102 @@ export default function MyRentals({ activeTab }: MyRentalsProps) {
                 No past transactions recorded.
               </div>
             ) : (
-              <div className="overflow-x-auto rounded-sm border border-[#E0DDD5] bg-white">
-                <table className="w-full text-left border-collapse text-xs">
-                  <thead>
-                    <tr className="border-b border-[#E0DDD5] bg-[#F2F1EC] text-[#718096] text-[9px] font-bold tracking-widest uppercase whitespace-nowrap">
-                      <th className="p-4">VEHICLE SPECIFICATION</th>
-                      <th className="p-4">START TIMEFRAME</th>
-                      <th className="p-4">DISTANCE SUM</th>
-                      <th className="p-4">PENALTY DISBURSEMENTS</th>
-                      <th className="p-4">LEASE STATE</th>
-                      <th className="p-4">FEEDBACK</th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-[#F2F1EC] text-[#1C2B3C] font-medium whitespace-nowrap">
-                    {pastRentals.map((rental) => {
-                      const vehicle = vehicles.find((v) => v.id === rental.vehicle_id);
-                      return (
-                        <tr key={rental.id} className="hover:bg-[#F2F1EC]/40">
-                          <td className="p-4 font-bold uppercase tracking-wide">{vehicle?.model || 'Unknown'}</td>
-                          <td className="p-4">{new Date(rental.start_time).toLocaleString()}</td>
-                          <td className="p-4 font-bold">{rental.distance_charges_accrued} USDC</td>
-                          <td className="p-4 font-bold text-orange-700">
-                            {rental.speed_penalties_accrued} USDC (Speed) / {rental.geofence_penalties_accrued || 0} USDC (Geofence)
-                          </td>
-                          <td className="p-4">
-                            <span className="inline-flex rounded-sm bg-[#EAE8E1] px-2.5 py-1 text-[9px] font-bold tracking-widest text-[#5A6573] border border-[#DDDCD4] uppercase">
-                              {rental.status}
+              <>
+                {/* Mobile View: Stacked Cards */}
+                <div className="block md:hidden space-y-4">
+                  {pastRentals.map((rental) => {
+                    const vehicle = vehicles.find((v) => v.id === rental.vehicle_id);
+                    return (
+                      <div key={rental.id} className="rounded-sm border border-[#E0DDD5] bg-white p-4 space-y-3 shadow-sm">
+                        <div className="flex justify-between border-b border-[#F2F1EC] pb-2 font-bold text-[#1C2B3C] uppercase text-[11px]">
+                          <span>{vehicle?.model || 'Unknown'}</span>
+                          <span className="text-[8px] px-2 py-0.5 rounded-sm bg-[#EAE8E1] border border-[#DDDCD4] tracking-widest">{rental.status}</span>
+                        </div>
+                        <div className="text-[10px] space-y-2 font-mono text-[#5A6573]">
+                          <div className="flex justify-between">
+                            <span>START TIMEFRAME:</span>
+                            <span className="text-right text-[#1C2B3C] font-sans font-semibold">{new Date(rental.start_time).toLocaleString()}</span>
+                          </div>
+                          <div className="flex justify-between">
+                            <span>DISTANCE CHARGES:</span>
+                            <span className="font-bold text-[#1C2B3C]">{rental.distance_charges_accrued} USDC</span>
+                          </div>
+                          <div className="flex justify-between">
+                            <span>SPEED / GEOFENCE PENALTIES:</span>
+                            <span className="font-bold text-orange-700 text-right">
+                              {rental.speed_penalties_accrued} USDC / {rental.geofence_penalties_accrued || 0} USDC
                             </span>
-                          </td>
-                          <td className="p-4">
-                            {reviewedRentalIds.has(rental.id) ? (
-                              <span className="text-[10px] font-bold uppercase tracking-wider text-green-700 bg-green-50 px-2 py-0.5 border border-green-200 rounded-sm">
-                                Reviewed
+                          </div>
+                        </div>
+                        <div className="pt-2 border-t border-[#F2F1EC] flex justify-end">
+                          {reviewedRentalIds.has(rental.id) ? (
+                            <span className="text-[9px] font-bold uppercase tracking-wider text-green-700 bg-green-50 px-2 py-0.5 border border-green-200 rounded-sm">
+                              Reviewed
+                            </span>
+                          ) : (
+                            <button
+                              onClick={() => setSelectedReviewRental(rental)}
+                              className="px-3 py-1.5 bg-[#1C2B3C] text-white rounded-sm text-[9px] font-bold uppercase tracking-widest hover:bg-[#111A24] border border-[#1C2B3C] transition-all"
+                            >
+                              Write Review
+                            </button>
+                          )}
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+
+                {/* Tablet / Desktop View: Clean Table */}
+                <div className="hidden md:block overflow-x-auto rounded-sm border border-[#E0DDD5] bg-white">
+                  <table className="w-full text-left border-collapse text-xs">
+                    <thead>
+                      <tr className="border-b border-[#E0DDD5] bg-[#F2F1EC] text-[#718096] text-[9px] font-bold tracking-widest uppercase whitespace-nowrap">
+                        <th className="p-4">VEHICLE SPECIFICATION</th>
+                        <th className="p-4">START TIMEFRAME</th>
+                        <th className="p-4">DISTANCE SUM</th>
+                        <th className="p-4">PENALTY DISBURSEMENTS</th>
+                        <th className="p-4">LEASE STATE</th>
+                        <th className="p-4">FEEDBACK</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-[#F2F1EC] text-[#1C2B3C] font-medium whitespace-nowrap">
+                      {pastRentals.map((rental) => {
+                        const vehicle = vehicles.find((v) => v.id === rental.vehicle_id);
+                        return (
+                          <tr key={rental.id} className="hover:bg-[#F2F1EC]/40">
+                            <td className="p-4 font-bold uppercase tracking-wide">{vehicle?.model || 'Unknown'}</td>
+                            <td className="p-4">{new Date(rental.start_time).toLocaleString()}</td>
+                            <td className="p-4 font-bold">{rental.distance_charges_accrued} USDC</td>
+                            <td className="p-4 font-bold text-orange-700">
+                              {rental.speed_penalties_accrued} USDC (Speed) / {rental.geofence_penalties_accrued || 0} USDC (Geofence)
+                            </td>
+                            <td className="p-4">
+                              <span className="inline-flex rounded-sm bg-[#EAE8E1] px-2.5 py-1 text-[9px] font-bold tracking-widest text-[#5A6573] border border-[#DDDCD4] uppercase">
+                                {rental.status}
                               </span>
-                            ) : (
-                              <button
-                                onClick={() => setSelectedReviewRental(rental)}
-                                className="px-3 py-1.5 bg-[#1C2B3C] text-white rounded-sm text-[9px] font-bold uppercase tracking-widest hover:bg-[#111A24] border border-[#1C2B3C] transition-all"
-                              >
-                                Write Review
-                              </button>
-                            )}
-                          </td>
-                        </tr>
-                      );
-                    })}
-                  </tbody>
-                </table>
-              </div>
+                            </td>
+                            <td className="p-4">
+                              {reviewedRentalIds.has(rental.id) ? (
+                                <span className="text-[10px] font-bold uppercase tracking-wider text-green-700 bg-green-50 px-2 py-0.5 border border-green-200 rounded-sm">
+                                  Reviewed
+                                </span>
+                              ) : (
+                                <button
+                                  onClick={() => setSelectedReviewRental(rental)}
+                                  className="px-3 py-1.5 bg-[#1C2B3C] text-white rounded-sm text-[9px] font-bold uppercase tracking-widest hover:bg-[#111A24] border border-[#1C2B3C] transition-all"
+                                >
+                                  Write Review
+                                </button>
+                              )}
+                            </td>
+                          </tr>
+                        );
+                      })}
+                    </tbody>
+                  </table>
+                </div>
+              </>
             )}
           </div>
         </div>

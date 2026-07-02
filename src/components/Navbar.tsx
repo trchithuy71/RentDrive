@@ -107,8 +107,8 @@ export default function Navbar({ currentView, setCurrentView, dappTab, setDappTa
             <Car className="h-5.5 w-5.5 stroke-[1.8]" />
           </div>
           <div className="flex flex-col justify-center">
-            <span className="text-xl font-black tracking-widest text-[#1C2B3C] font-sans leading-none">RENTDRIVE</span>
-            <span className="block text-[9px] text-[#5A6573] font-mono tracking-widest uppercase mt-1">ESCROW & DEPIN PLATFORM</span>
+            <span className="text-lg sm:text-xl font-black tracking-widest text-[#1C2B3C] font-sans leading-none">RENTDRIVE</span>
+            <span className="hidden sm:block text-[9px] text-[#5A6573] font-mono tracking-widest uppercase mt-1">ESCROW & DEPIN PLATFORM</span>
           </div>
         </Link>
 

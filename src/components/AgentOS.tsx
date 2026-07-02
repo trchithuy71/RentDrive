@@ -467,7 +467,7 @@ export default function AgentOS() {
   };
 
   return (
-    <div className="mx-auto max-w-7xl px-4 py-4 space-y-4">
+    <div className="mx-auto max-w-7xl px-4 py-4 space-y-4 animate-fade-in">
       
       {/* Visual Workspace Dashboard Header */}
       <div className="flex flex-col md:flex-row items-start md:items-center justify-between border border-[#E0DDD5] bg-[#F2F1EC]/60 backdrop-blur-sm p-4 rounded-sm gap-4">
@@ -495,7 +495,7 @@ export default function AgentOS() {
         </div>
 
         {/* Global Agent Stats Bar */}
-        <div className="flex items-center gap-6 text-[10px] font-mono">
+        <div className="flex flex-wrap items-center gap-4 sm:gap-6 text-[10px] font-mono w-full sm:w-auto justify-between sm:justify-start">
           <div className="flex flex-col">
             <span className="text-[#718096] uppercase text-[8px]">LLM CORE</span>
             <span className="font-bold text-[#1C2B3C]">{selectedModel}</span>
@@ -530,8 +530,8 @@ export default function AgentOS() {
               type="password"
               value={customApiKey}
               onChange={(e) => setCustomApiKey(e.target.value)}
-              placeholder="Paste DeepSeek API Key (sk-...)"
-              className="flex-1 bg-white border border-[#DDDCD4] rounded-sm px-3 py-2 outline-none focus:border-[#1C2B3C] text-[11px]"
+              placeholder="e.g. sk-or-v1-xxxxxxxxxxxxxxxxxxxx"
+              className="flex-1 bg-white border border-[#DDDCD4] rounded-sm px-3 py-2 outline-none focus:border-[#1C2B3C] text-[11px] form-focus-ring"
             />
             {customApiKey && (
               <button 
@@ -563,9 +563,33 @@ export default function AgentOS() {
                 value={input}
                 onChange={(e) => setInput(e.target.value)}
                 disabled={loading}
-                placeholder="Submit goal: 'Lease a Tesla Model Y by converting 10 EURC' or 'Bridge 50 USDC from BaseSepolia to rent Ducati'..."
-                className="w-full h-20 text-xs bg-[#F2F1EC]/30 border border-[#DDDCD4] rounded-sm p-2 outline-none focus:border-[#1C2B3C] font-semibold leading-relaxed"
+                placeholder="e.g. 'Lease a Tesla Model Y by converting 10 EURC' or 'Bridge 50 USDC from BaseSepolia to rent Ducati'..."
+                className="w-full h-20 text-xs bg-[#F2F1EC]/30 border border-[#DDDCD4] rounded-sm p-2 outline-none focus:border-[#1C2B3C] font-semibold leading-relaxed form-focus-ring"
               />
+              <span className="text-[9px] text-[#718096] font-semibold leading-normal block mt-1">💡 Describe your goal in plain English. The agent parses your balances, bridges tokens, and executes actions automatically.</span>
+              
+              {/* Suggestion Presets */}
+              <div className="space-y-1 pb-1">
+                <span className="text-[8px] text-[#718096] uppercase font-bold tracking-widest block">Goal Suggestion Presets:</span>
+                <div className="flex flex-wrap gap-1.5">
+                  {[
+                    "Lease a Tesla Model Y by converting 10 EURC",
+                    "Bridge 50 USDC from BaseSepolia to rent Ducati",
+                    "List active fleet vehicles on Arc Network"
+                  ].map((preset, pIdx) => (
+                    <button
+                      key={pIdx}
+                      type="button"
+                      disabled={loading}
+                      onClick={() => setInput(preset)}
+                      className="text-[9px] font-sans font-bold bg-[#F2F1EC] hover:bg-[#EAE8E1] text-[#1C2B3C] border border-[#DDDCD4] rounded-sm px-2 py-1 text-left transition-all max-w-full truncate hover:scale-[1.01]"
+                    >
+                      {preset}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
               <button
                 type="submit"
                 disabled={loading || !input.trim()}

@@ -45,7 +45,7 @@ export default function Simulator() {
   const [rentals, setRentals] = useState<Rental[]>([]);
   const [vehicles, setVehicles] = useState<Vehicle[]>([]);
   const [selectedRentalId, setSelectedRentalId] = useState<number | null>(null);
-  
+
   // Simulated OBD-II State
   const [speed, setSpeed] = useState(60);
   const [odometer, setOdometer] = useState(100000); // meters
@@ -250,8 +250,163 @@ export default function Simulator() {
     }, 100);
   };
 
+  // Retro Radar Map Canvas State
+  const canvasRef = React.useRef<HTMLCanvasElement>(null);
+  const [trail, setTrail] = useState<{lat: number, lng: number}[]>([]);
+  const [pulseTime, setPulseTime] = useState(0);
+
+  // Pulse animation loop
+  useEffect(() => {
+    const handle = setInterval(() => {
+      setPulseTime(prev => (prev + 1) % 10);
+    }, 150);
+    return () => clearInterval(handle);
+  }, []);
+
+  // Update path trail
+  useEffect(() => {
+    if (!selectedRentalId) {
+      setTrail([]);
+      return;
+    }
+    setTrail(prev => {
+      if (prev.length > 0 && prev[prev.length - 1].lat === lat && prev[prev.length - 1].lng === lng) {
+        return prev;
+      }
+      const nextTrail = [...prev, { lat, lng }];
+      return nextTrail.slice(-40);
+    });
+  }, [lat, lng, selectedRentalId]);
+
+  // Radar drawing logic
+  useEffect(() => {
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+    const ctx = canvas.getContext('2d');
+    if (!ctx) return;
+
+    const width = canvas.width;
+    const height = canvas.height;
+    const center = { x: width / 2, y: height / 2 };
+
+    // Clear Canvas
+    ctx.clearRect(0, 0, width, height);
+
+    // Draw grid background
+    ctx.strokeStyle = '#E2E8F0';
+    ctx.lineWidth = 1;
+    for (let i = 20; i < width; i += 20) {
+      ctx.beginPath();
+      ctx.moveTo(i, 0);
+      ctx.lineTo(i, height);
+      ctx.stroke();
+    }
+    for (let i = 20; i < height; i += 20) {
+      ctx.beginPath();
+      ctx.moveTo(0, i);
+      ctx.lineTo(width, i);
+      ctx.stroke();
+    }
+
+    // Determine scale based on geofence radius
+    const currentRadius = selectedVehicle?.geofence_radius_meters !== undefined ? Number(selectedVehicle.geofence_radius_meters) : 5000;
+    const limitPx = Math.min(width, height) * 0.35;
+    const scale = limitPx / Math.max(currentRadius, 100);
+
+    // Draw geofence circle
+    ctx.beginPath();
+    ctx.arc(center.x, center.y, currentRadius * scale, 0, 2 * Math.PI);
+    ctx.lineWidth = 2;
+    if (isInsideGeofence) {
+      ctx.strokeStyle = '#10B981';
+      ctx.fillStyle = 'rgba(16, 185, 129, 0.05)';
+    } else {
+      ctx.strokeStyle = '#EF4444';
+      ctx.fillStyle = 'rgba(239, 68, 68, 0.08)';
+    }
+    ctx.fill();
+    ctx.stroke();
+
+    // Draw geofence anchor center
+    ctx.beginPath();
+    ctx.arc(center.x, center.y, 4, 0, 2 * Math.PI);
+    ctx.fillStyle = '#1C2B3C';
+    ctx.fill();
+
+    // Draw path breadcrumbs line
+    const matchVehicle = selectedRental ? vehicles.find(v => v.id === selectedRental.vehicle_id) : null;
+    const cLat = matchVehicle?.geofence_center_lat !== undefined ? Number(matchVehicle.geofence_center_lat) : 21.028511;
+    const cLng = matchVehicle?.geofence_center_lng !== undefined ? Number(matchVehicle.geofence_center_lng) : 105.804817;
+
+    if (trail.length > 1) {
+      ctx.beginPath();
+      ctx.lineWidth = 2;
+      ctx.strokeStyle = 'rgba(28, 43, 60, 0.4)';
+      ctx.setLineDash([4, 4]);
+
+      trail.forEach((pos, idx) => {
+        const dx = (pos.lng - cLng) * 111320;
+        const dy = (pos.lat - cLat) * 111320;
+        const px = center.x + dx * scale;
+        const py = center.y - dy * scale;
+
+        if (idx === 0) {
+          ctx.moveTo(px, py);
+        } else {
+          ctx.lineTo(px, py);
+        }
+      });
+      ctx.stroke();
+      ctx.setLineDash([]);
+    }
+
+    // Draw path points
+    trail.forEach((pos, idx) => {
+      if (idx === trail.length - 1) return;
+      const dx = (pos.lng - cLng) * 111320;
+      const dy = (pos.lat - cLat) * 111320;
+      const px = center.x + dx * scale;
+      const py = center.y - dy * scale;
+      ctx.beginPath();
+      ctx.arc(px, py, 2, 0, 2 * Math.PI);
+      ctx.fillStyle = '#94A3B8';
+      ctx.fill();
+    });
+
+    // Draw active cursor
+    const activeDx = (lng - cLng) * 111320;
+    const activeDy = (lat - cLat) * 111320;
+    const activePx = center.x + activeDx * scale;
+    const activePy = center.y - activeDy * scale;
+
+    // Draw pulsating signal
+    const pulseRad = 8 + pulseTime * 1.5;
+    ctx.beginPath();
+    ctx.arc(activePx, activePy, pulseRad, 0, 2 * Math.PI);
+    ctx.strokeStyle = isInsideGeofence ? 'rgba(16, 185, 129, 0.25)' : 'rgba(239, 68, 68, 0.25)';
+    ctx.lineWidth = 1.5;
+    ctx.stroke();
+
+    // Draw cursor center dot
+    ctx.beginPath();
+    ctx.arc(activePx, activePy, 5, 0, 2 * Math.PI);
+    ctx.fillStyle = isInsideGeofence ? '#10B981' : '#EF4444';
+    ctx.fill();
+    ctx.strokeStyle = '#FFFFFF';
+    ctx.lineWidth = 1.5;
+    ctx.stroke();
+
+    // Scale label text overlay
+    ctx.fillStyle = 'rgba(28, 43, 60, 0.8)';
+    ctx.fillRect(8, height - 24, 120, 16);
+    ctx.fillStyle = '#FFFFFF';
+    ctx.font = 'bold 8px monospace';
+    ctx.fillText(`Scale: ${currentRadius}m radius`, 12, height - 13);
+
+  }, [trail, pulseTime, lat, lng, selectedRental, vehicles, isInsideGeofence, selectedVehicle]);
+
   return (
-    <div className="mx-auto max-w-7xl px-6 py-10">
+    <div className="mx-auto max-w-7xl px-6 py-10 animate-fade-in">
       <div className="flex items-center justify-between mb-8 pb-3 border-b border-[#E0DDD5]">
         <h2 className="text-sm font-bold uppercase tracking-widest text-[#1C2B3C] flex items-center gap-2.5">
           <Cpu className="h-4 w-4 text-[#1C2B3C]" />
@@ -284,7 +439,7 @@ export default function Simulator() {
                   const rent = rentals.find(r => r.id === id);
                   if (rent) setOdometer(Number(rent.current_odometer || rent.start_odometer || 100000));
                 }}
-                className="w-full rounded-sm border border-[#DDDCD4] bg-white px-4 py-2.5 text-xs text-[#1C2B3C] font-bold focus:outline-none"
+                className="w-full rounded-sm border border-[#DDDCD4] bg-white px-4 py-2.5 text-xs text-[#1C2B3C] font-bold focus:outline-none form-focus-ring"
               >
                 {rentals.map(r => {
                   const v = vehicles.find(veh => veh.id === r.vehicle_id);
@@ -295,6 +450,7 @@ export default function Simulator() {
                   );
                 })}
               </select>
+              <span className="text-[9px] text-[#718096] font-semibold mt-1 block">💡 Select the active lease profile to simulate real-time driving logs.</span>
             </div>
 
             {/* Vehicle Details */}
@@ -343,6 +499,7 @@ export default function Simulator() {
                   +10
                 </button>
               </div>
+              <span className="text-[9px] text-[#718096] font-semibold mt-1 block">💡 Exceeding the vehicle speed limit registers speeding violations on-chain.</span>
             </div>
 
             {/* Odometer Manual Increment */}
@@ -476,6 +633,21 @@ export default function Simulator() {
                 <span className={`text-base font-extrabold ${isInsideGeofence ? 'text-emerald-600' : 'text-red-600 animate-pulse'}`}>
                   {isInsideGeofence ? 'INSIDE' : 'OUTSIDE'}
                 </span>
+              </div>
+            </div>
+
+            {/* Retro Radar Route Canvas */}
+            <div className="rounded-sm border border-[#E0DDD5] bg-white p-5 shadow-sm space-y-3.5">
+              <span className="block text-[9px] text-[#718096] font-bold uppercase tracking-widest pb-1 border-b border-[#F2F1EC]">
+                REAL-TIME TELEMETRICS ROUTE TRACKER
+              </span>
+              <div className="flex justify-center items-center bg-[#F9F9F6] border border-[#DDDCD4] rounded-sm p-4 relative overflow-hidden w-full max-w-full aspect-[480/280]">
+                <canvas 
+                  ref={canvasRef} 
+                  width={480} 
+                  height={280} 
+                  className="max-w-full block bg-white border border-[#E2E8F0] shadow-sm rounded-sm"
+                />
               </div>
             </div>
 

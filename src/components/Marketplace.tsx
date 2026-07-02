@@ -349,7 +349,7 @@ export default function Marketplace({ onRentalStarted }: MarketplaceProps) {
 
   return (
     <PullToRefresh onRefresh={async () => { await fetchVehicles(); }}>
-      <div className="mx-auto max-w-7xl px-6 py-10">
+      <div className="mx-auto max-w-7xl px-6 py-10 animate-fade-in">
       {/* Portage-inspired high-end minimalist Hero Banner */}
       <div className="relative mb-14 rounded-sm overflow-hidden bg-[#EAE8E1] border border-[#DDDCD4] p-10 md:p-14 shadow-sm">
         <div className="max-w-3xl">
@@ -379,7 +379,7 @@ export default function Marketplace({ onRentalStarted }: MarketplaceProps) {
       {loading ? (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
           {[1, 2, 3].map((i) => (
-            <div key={i} className="animate-pulse rounded-sm border border-[#E0DDD5] bg-[#EAE8E1]/40 p-5 h-96" />
+            <div key={i} className="shimmer-skeleton rounded-sm border border-[#E0DDD5] p-5 h-96" />
           ))}
         </div>
       ) : (
@@ -387,7 +387,7 @@ export default function Marketplace({ onRentalStarted }: MarketplaceProps) {
           {vehicles.map((vehicle) => (
             <div
               key={vehicle.id}
-              className="group relative flex flex-col overflow-hidden rounded-sm border border-[#E0DDD5] bg-white transition-all duration-300 hover:border-[#1C2B3C] hover:shadow-md"
+              className="group relative flex flex-col overflow-hidden rounded-sm border border-[#E0DDD5] bg-white premium-hover-card"
             >
               {/* Image Container with strict flat borders */}
               <div className="relative h-56 overflow-hidden bg-[#F2F1EC] border-b border-[#E0DDD5]">
@@ -430,7 +430,7 @@ export default function Marketplace({ onRentalStarted }: MarketplaceProps) {
                   </span>
                 </div>
 
-                <div className="grid grid-cols-2 gap-y-4 gap-x-6 my-4 py-5 border-y border-[#E5E3DB] text-xs">
+                <div className="grid grid-cols-2 gap-y-4 gap-x-3 sm:gap-x-6 my-4 py-5 border-y border-[#E5E3DB] text-[11px] sm:text-xs">
                   <div>
                     <span className="block text-[9px] text-[#718096] uppercase tracking-widest font-bold">BASE RATE</span>
                     <span className="text-[#1C2B3C] font-extrabold">{vehicle.base_rate_per_hour} {vehicle.accepted_currency || 'USDC'} / hour</span>
