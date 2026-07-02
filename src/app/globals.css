@@ -1,72 +1,208 @@
 @import "tailwindcss";
+	
+	:root {
+	  --background: #F2F1EC;
+	  --foreground: #18222F;
+	  --card-bg: #FFFFFF;
+	  --card-border: #E5E3DB;
+	  --primary-accent: #1C2B3C;
+	  --secondary-accent: #3E5062;
+	  --accent-hover: #111A24;
+	}
+	
+	@theme inline {
+	  --color-background: var(--background);
+	  --color-foreground: var(--foreground);
+	  --font-sans: var(--font-geist-sans), Inter, sans-serif;
+	  --font-mono: var(--font-geist-mono), monospace;
+	}
+	
+	body {
+	  background: var(--background);
+	  color: var(--foreground);
+	  font-family: var(--font-sans);
+	  -webkit-font-smoothing: antialiased;
+	  -moz-osx-font-smoothing: grayscale;
+	}
+	
+	/* Custom premium scrollbar */
+	::-webkit-scrollbar {
+	  width: 6px;
+	  height: 6px;
+	}
+	::-webkit-scrollbar-track {
+	  background: #F2F1EC;
+	}
+	::-webkit-scrollbar-thumb {
+	  background: #C4C2B7;
+	  border-radius: 3px;
+	}
+	::-webkit-scrollbar-thumb:hover {
+	  background: #A4A297;
+	}
+	
+	/* ─── Currency Indicator System ─────────────────────────────────── */
+	.currency-usdc {
+	  --currency-color: #2775CA;
+	  --currency-bg: #EBF2FB;
+	  --currency-border: #B8D4F0;
+	}
+	
+	.currency-eurc {
+	  --currency-color: #1A47B8;
+	  --currency-bg: #E8ECF7;
+	  --currency-border: #A8B8E0;
+	}
+	
+	.currency-badge {
+	  color: var(--currency-color);
+	  background-color: var(--currency-bg);
+	  border-color: var(--currency-border);
+	}
+	
+	/* ─── Keyframe Animations ────────────────────────────────────────── */
+	@keyframes fx-pulse {
+	  0%, 100% { opacity: 1; }
+	  50% { opacity: 0.6; }
+	}
+	
+	@keyframes slide-down {
+	  from {
+	    opacity: 0;
+	    transform: translateY(-8px);
+	  }
+	  to {
+	    opacity: 1;
+	    transform: translateY(0);
+	  }
+	}
+	
+	@keyframes slideIn {
+	  from {
+	    opacity: 0;
+	    transform: translateX(12px) translateY(0);
+	  }
+	  to {
+	    opacity: 1;
+	    transform: translateX(0) translateY(0);
+	  }
+	}
+	
+	@keyframes fadeIn {
+	  from {
+	    opacity: 0;
+	  }
+	  to {
+	    opacity: 1;
+	  }
+	}
+	
+	@keyframes swing {
+	  0%, 100% { transform: rotate(0deg); }
+	  20% { transform: rotate(12deg); }
+	  40% { transform: rotate(-10deg); }
+	  60% { transform: rotate(6deg); }
+	  80% { transform: rotate(-4deg); }
+	}
+	
+	@keyframes pulse-subtle {
+	  0%, 100% {
+	    opacity: 1;
+	    background-color: rgba(255, 255, 255, 1);
+	  }
+	  50% {
+	    opacity: 0.85;
+	    background-color: rgba(231, 229, 221, 0.3);
+	  }
+	}
+	
+	/* ─── Animation Utility Classes ────────────────────────────────── */
+	.fx-live-indicator {
+	  animation: fx-pulse 2s ease-in-out infinite;
+	}
+	
+	.animate-slide-down {
+	  animation: slide-down 0.25s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+	}
+	
+	.animate-fade-in {
+	  animation: fadeIn 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+	}
+	
+	.animate-pulse-subtle {
+	  animation: pulse-subtle 2s ease-in-out infinite;
+	}
+	
+	/* Premium interactive hover transformations */
+	.premium-hover-card {
+	  transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.3s cubic-bezier(0.16, 1, 0.3, 1), border-color 0.2s ease;
+	}
+	.premium-hover-card:hover {
+	  transform: translateY(-2.5px);
+	  box-shadow: 0 16px 32px -12px rgba(28, 43, 60, 0.12), 0 0 0 1px rgba(28, 43, 60, 0.05);
+	  border-color: var(--primary-accent) !important;
+	}
+	
+	/* Interactive Buttons scaling feedback */
+	.btn-tap-feedback {
+	  transition: transform 0.2s cubic-bezier(0.34, 1.56, 0.64, 1), background-color 0.15s ease, border-color 0.15s ease;
+	}
+	.btn-tap-feedback:hover {
+	  transform: translateY(-1px);
+	}
+	.btn-tap-feedback:active {
+	  transform: scale(0.97);
+	}
+	
+	/* Form focus outline */
+	.form-focus-ring {
+	  transition: border-color 0.25s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+	}
+	.form-focus-ring:focus {
+	  outline: none;
+	  border-color: var(--primary-accent) !important;
+	  box-shadow: 0 0 0 2.5px rgba(28, 43, 60, 0.12);
+	}
 
-:root {
-  --background: #F2F1EC;
-  --foreground: #18222F;
-  --card-bg: #FFFFFF;
-  --card-border: #E5E3DB;
-  --primary-accent: #1C2B3C;
-  --secondary-accent: #3E5062;
-  --accent-hover: #111A24;
-}
+	/* Shimmering Skeleton Loader styles */
+	@keyframes shimmer {
+	  100% {
+	    transform: translateX(100%);
+	  }
+	}
+	
+	.shimmer-skeleton {
+	  position: relative;
+	  overflow: hidden;
+	  background-color: #EAE8E1;
+	}
+	
+	.shimmer-skeleton::after {
+	  position: absolute;
+	  top: 0;
+	  right: 0;
+	  bottom: 0;
+	  left: 0;
+	  transform: translateX(-100%);
+	  background-image: linear-gradient(
+	    90deg,
+	    rgba(255, 255, 255, 0) 0%,
+	    rgba(255, 255, 255, 0.35) 20%,
+	    rgba(255, 255, 255, 0.6) 60%,
+	    rgba(255, 255, 255, 0) 100%
+	  );
+	  animation: shimmer 1.8s infinite;
+	  content: '';
+	}
 
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans), Inter, sans-serif;
-  --font-mono: var(--font-geist-mono), monospace;
-}
+	.transition-premium-modal {
+	  transition: opacity 300ms cubic-bezier(0.16, 1, 0.3, 1), transform 300ms cubic-bezier(0.16, 1, 0.3, 1), backdrop-filter 300ms cubic-bezier(0.16, 1, 0.3, 1);
+	}
+	
+	.transition-premium-page {
+	  transition: opacity 400ms cubic-bezier(0.16, 1, 0.3, 1), transform 400ms cubic-bezier(0.16, 1, 0.3, 1);
+	}
+	
 
-body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: var(--font-sans);
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
-}
 
-/* Custom premium scrollbar */
-::-webkit-scrollbar {
-  width: 6px;
-  height: 6px;
-}
-::-webkit-scrollbar-track {
-  background: #F2F1EC;
-}
-::-webkit-scrollbar-thumb {
-  background: #C4C2B7;
-  border-radius: 3px;
-}
-::-webkit-scrollbar-thumb:hover {
-  background: #A4A297;
-}
-
-/* ─── Currency Indicator System ─────────────────────────────────── */
-.currency-usdc {
-  --currency-color: #2775CA;
-  --currency-bg: #EBF2FB;
-  --currency-border: #B8D4F0;
-}
-
-.currency-eurc {
-  --currency-color: #1A47B8;
-  --currency-bg: #E8ECF7;
-  --currency-border: #A8B8E0;
-}
-
-.currency-badge {
-  color: var(--currency-color);
-  background-color: var(--currency-bg);
-  border-color: var(--currency-border);
-}
-
-/* FX rate pulse animation */
-@keyframes fx-pulse {
-  0%, 100% { opacity: 1; }
-  50% { opacity: 0.6; }
-}
-
-.fx-live-indicator {
-  animation: fx-pulse 2s ease-in-out infinite;
-}
 

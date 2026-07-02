@@ -77,7 +77,7 @@ export default function FAQPage() {
   };
 
   return (
-    <div className="mx-auto max-w-4xl px-6 py-10 space-y-12">
+    <div className="mx-auto max-w-4xl px-6 py-10 space-y-12 animate-fade-in">
       <Breadcrumbs items={[
         { label: 'Home', url: '/' },
         { label: 'FAQ', url: '/faq' }
@@ -129,10 +129,13 @@ export default function FAQPage() {
           type="text"
           value={searchQuery}
           onChange={(e) => setSearchQuery(e.target.value)}
-          placeholder="SEARCH SYSTEM KNOWLEDGE BASE..."
-          className="w-full rounded-sm border border-[#DDDCD4] bg-white pl-10 pr-4 py-3.5 text-xs text-[#1C2B3C] font-bold focus:border-[#1C2B3C] focus:outline-none placeholder-[#A0AEC0] shadow-sm uppercase tracking-wide"
+          placeholder="e.g. How does gas sponsorship work? or What is the geofence rule?"
+          className="w-full rounded-sm border border-[#DDDCD4] bg-white pl-10 pr-4 py-3.5 text-xs text-[#1C2B3C] font-semibold focus:border-[#1C2B3C] focus:outline-none placeholder-[#A0AEC0] shadow-sm form-focus-ring"
         />
       </div>
+      <p className="text-[9px] text-[#718096] text-center font-semibold mt-1.5 block">
+        💡 Search through the system documentation by keywords, error codes, or operation types.
+      </p>
 
       {/* Accordion List */}
       <div className="space-y-4 max-w-3xl mx-auto">

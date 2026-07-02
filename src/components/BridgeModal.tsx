@@ -59,13 +59,30 @@ export default function BridgeModal() {
     };
   }, [amount, sourceChain, estimateBridgeFee]);
 
-  if (!bridgeModalOpen) return null;
+  const [isRendered, setIsRendered] = useState(false);
+  const [isOpen, setIsOpen] = useState(false);
+
+  useEffect(() => {
+    if (bridgeModalOpen) {
+      setIsRendered(true);
+      const frame = requestAnimationFrame(() => {
+        setIsOpen(true);
+      });
+      return () => cancelAnimationFrame(frame);
+    } else {
+      setIsOpen(false);
+      const timeout = setTimeout(() => setIsRendered(false), 300);
+      return () => clearTimeout(timeout);
+    }
+  }, [bridgeModalOpen]);
 
   const handleClose = () => {
     if (isBridging) return; // Prevent closing while transaction is in progress
     setBridgeModalOpen(false);
     resetBridge();
   };
+
+  if (!isRendered) return null;
 
   const handleBridge = async () => {
     if (!amount || isNaN(parseFloat(amount)) || parseFloat(amount) <= 0) return;
@@ -80,15 +97,15 @@ export default function BridgeModal() {
   const sourceChainBalance = balances?.breakdown.find(b => b.chain.toLowerCase().includes(sourceChain.toLowerCase().replace('sepolia', '')) || b.chain.toLowerCase().includes(sourceChain.toLowerCase()))?.confirmedBalance || '0.00';
 
   return (
-    <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
+    <div className={`fixed inset-0 z-[100] flex items-center justify-center p-4 transition-premium-modal ${isOpen ? 'opacity-100' : 'opacity-0 pointer-events-none'}`}>
       {/* Backdrop */}
       <div 
-        className="absolute inset-0 bg-[#1C2B3C]/40 backdrop-blur-sm transition-opacity duration-300"
+        className="absolute inset-0 bg-[#1C2B3C]/40 backdrop-blur-sm"
         onClick={handleClose}
       />
       
       {/* Modal Card */}
-      <div className="relative w-full max-w-lg overflow-hidden rounded-sm border border-[#E0DDD5] bg-[#F2F1EC] text-[#1C2B3C] shadow-2xl transition-all duration-300 transform scale-100 flex flex-col max-h-[90vh]">
+      <div className={`relative w-full max-w-lg overflow-hidden rounded-sm border border-[#E0DDD5] bg-[#F2F1EC] text-[#1C2B3C] shadow-2xl transition-premium-modal flex flex-col max-h-[90vh] ${isOpen ? 'scale-100 translate-y-0 opacity-100' : 'scale-95 translate-y-4 opacity-0'}`}>
         
         {/* Header */}
         <div className="flex items-center justify-between border-b border-[#E0DDD5] px-6 py-4.5">
@@ -174,7 +191,6 @@ export default function BridgeModal() {
                 </div>
               </div>
 
-              {/* Step 2: Amount Input */}
               <div className="space-y-2">
                 <div className="flex justify-between items-center">
                   <label className="text-[10px] font-bold tracking-widest text-[#5A6573] uppercase">
@@ -186,12 +202,12 @@ export default function BridgeModal() {
                     </span>
                   )}
                 </div>
-                <div className="relative rounded-sm border border-[#E0DDD5] bg-white shadow-inner focus-within:border-[#1C2B3C] transition-all">
+                <div className="relative rounded-sm border border-[#E0DDD5] bg-white shadow-inner focus-within:border-[#1C2B3C] transition-all form-focus-ring">
                   <input
                     type="number"
                     value={amount}
                     onChange={(e) => setAmount(e.target.value)}
-                    placeholder="0.00"
+                    placeholder="e.g. 50.00"
                     disabled={isBridging}
                     className="w-full bg-transparent px-4 py-3.5 text-base font-bold text-[#1C2B3C] outline-none disabled:opacity-50"
                   />
@@ -205,6 +221,7 @@ export default function BridgeModal() {
                     <span className="text-xs font-mono font-bold text-[#5A6573]">USDC</span>
                   </div>
                 </div>
+                <span className="text-[9px] text-[#718096] font-semibold mt-1 block px-1">💡 Bridge locks or burns stablecoins on the source chain and releases them on Arc.</span>
               </div>
 
               {/* Estimate Details */}

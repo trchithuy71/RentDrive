@@ -9,7 +9,7 @@ export default function LegalPages({ defaultTab = 'privacy' }: { defaultTab?: 'p
   const [activeLegalTab, setActiveLegalTab] = useState<'privacy' | 'terms'>(defaultTab);
 
   return (
-    <div className="mx-auto max-w-4xl px-6 py-10 space-y-8">
+    <div className="mx-auto max-w-4xl px-6 py-10 space-y-8 animate-fade-in">
       <Breadcrumbs items={[
         { label: 'Home', url: '/' },
         { label: activeLegalTab === 'privacy' ? 'Privacy Policy' : 'Terms of Service', url: activeLegalTab === 'privacy' ? '/privacy' : '/terms' }

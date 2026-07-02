@@ -32,7 +32,7 @@ export default function ContactPage() {
   };
 
   return (
-    <div className="mx-auto max-w-5xl px-6 py-10 space-y-12">
+    <div className="mx-auto max-w-5xl px-6 py-10 space-y-12 animate-fade-in">
       <Breadcrumbs items={[
         { label: 'Home', url: '/' },
         { label: 'Contact', url: '/contact' }
@@ -75,9 +75,10 @@ export default function ContactPage() {
                   required
                   value={name}
                   onChange={(e) => setName(e.target.value)}
-                  placeholder="E.g. SOPHIE CHEN"
-                  className="w-full rounded-sm border border-[#DDDCD4] bg-white px-4 py-3 text-xs text-[#1C2B3C] font-semibold focus:border-[#1C2B3C] focus:outline-none placeholder-[#A0AEC0] tracking-wide"
+                  placeholder="e.g. Sophie Chen"
+                  className="w-full rounded-sm border border-[#DDDCD4] bg-white px-4 py-3 text-xs text-[#1C2B3C] font-semibold focus:border-[#1C2B3C] focus:outline-none placeholder-[#A0AEC0] tracking-wide form-focus-ring"
                 />
+                <span className="text-[9px] text-[#718096] font-semibold mt-1 block">💡 Your first and last name.</span>
               </div>
 
               <div>
@@ -87,9 +88,10 @@ export default function ContactPage() {
                   required
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
-                  placeholder="E.g. SOPHIE@DOMAIN.COM"
-                  className="w-full rounded-sm border border-[#DDDCD4] bg-white px-4 py-3 text-xs text-[#1C2B3C] font-semibold focus:border-[#1C2B3C] focus:outline-none placeholder-[#A0AEC0] tracking-wide"
+                  placeholder="e.g. sophie@example.com"
+                  className="w-full rounded-sm border border-[#DDDCD4] bg-white px-4 py-3 text-xs text-[#1C2B3C] font-semibold focus:border-[#1C2B3C] focus:outline-none placeholder-[#A0AEC0] tracking-wide form-focus-ring"
                 />
+                <span className="text-[9px] text-[#718096] font-semibold mt-1 block">💡 We will respond to this email address.</span>
               </div>
             </div>
 
@@ -98,13 +100,14 @@ export default function ContactPage() {
               <select
                 value={category}
                 onChange={(e) => setCategory(e.target.value)}
-                className="w-full rounded-sm border border-[#DDDCD4] bg-white px-4 py-3 text-xs text-[#1C2B3C] font-bold focus:border-[#1C2B3C] focus:outline-none uppercase tracking-wide"
+                className="w-full rounded-sm border border-[#DDDCD4] bg-white px-4 py-3 text-xs text-[#1C2B3C] font-bold focus:border-[#1C2B3C] focus:outline-none uppercase tracking-wide form-focus-ring"
               >
                 <option value="general">GENERAL ENQUIRY</option>
                 <option value="bug">BUG REPORT / INTERACTION ERROR</option>
                 <option value="feature">FEATURE SPECIFICATION REQUEST</option>
                 <option value="hardware">OBD-II HARDWARE PILOT</option>
               </select>
+              <span className="text-[9px] text-[#718096] font-semibold mt-1 block">💡 Select the topic that best describes your inquiry.</span>
             </div>
 
             <div>
@@ -114,9 +117,10 @@ export default function ContactPage() {
                 rows={5}
                 value={message}
                 onChange={(e) => setMessage(e.target.value)}
-                placeholder="DESCRIBE YOUR INQUIRY OR HARDWARE SPECIFICATIONS..."
-                className="w-full rounded-sm border border-[#DDDCD4] bg-white px-4 py-3 text-xs text-[#1C2B3C] font-semibold focus:border-[#1C2B3C] focus:outline-none placeholder-[#A0AEC0] tracking-wide"
+                placeholder="e.g. Please provide information regarding smart contract auditing or detail any issues experienced..."
+                className="w-full rounded-sm border border-[#DDDCD4] bg-white px-4 py-3 text-xs text-[#1C2B3C] font-semibold focus:border-[#1C2B3C] focus:outline-none placeholder-[#A0AEC0] tracking-wide form-focus-ring"
               />
+              <span className="text-[9px] text-[#718096] font-semibold mt-1 block">💡 Provide as much detail as possible to help us assist you.</span>
             </div>
 
             <button

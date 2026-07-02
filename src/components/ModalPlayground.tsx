@@ -204,7 +204,7 @@ export default function ModalPlayground() {
   };
 
   return (
-    <div className="mx-auto max-w-7xl px-6 py-10">
+    <div className="mx-auto max-w-7xl px-6 py-10 animate-fade-in">
       {/* Portage style sandbox banner */}
       <div className="relative mb-14 rounded-sm overflow-hidden bg-[#EAE8E1] border border-[#DDDCD4] p-10 shadow-sm">
         <span className="inline-flex items-center gap-1.5 rounded-sm bg-[#1C2B3C] px-3 py-1.5 text-[9px] font-bold tracking-widest text-[#F2F1EC] uppercase">

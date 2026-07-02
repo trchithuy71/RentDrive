@@ -168,7 +168,7 @@ export default function NotificationCenter() {
                     {/* Tx Hash Link */}
                     {notification.txHash && (
                       <a
-                        href={`https://explorer.testnet.arc.network/tx/${notification.txHash}`}
+                        href={`https://testnet.arcscan.app/tx/${notification.txHash}`}
                         target="_blank"
                         rel="noreferrer"
                         className="inline-flex items-center gap-1 text-[8.5px] font-bold text-indigo-600 hover:text-indigo-800 uppercase tracking-widest mt-1.5 transition-colors"

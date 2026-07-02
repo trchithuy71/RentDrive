@@ -128,8 +128,8 @@ export default function Modal() {
   return (
     <div
       onClick={handleBackdropClick}
-      className={`fixed inset-0 z-50 flex items-center justify-center p-4 bg-[#1C2B3C]/40 backdrop-blur-sm transition-opacity duration-200 overflow-y-auto ${
-        isOpen ? 'opacity-100' : 'opacity-0'
+      className={`fixed inset-0 z-50 flex items-center justify-center p-4 bg-[#1C2B3C]/40 backdrop-blur-sm transition-premium-modal overflow-y-auto ${
+        isOpen ? 'opacity-100' : 'opacity-0 pointer-events-none'
       }`}
       style={{ contentVisibility: 'auto' }}
     >
@@ -150,8 +150,8 @@ export default function Modal() {
         {/* Core Active Modal Card Container */}
         <div
           ref={containerRef}
-          className={`w-full rounded-sm border border-[#DDDCD4] bg-[#F2F1EC] p-6 md:p-8 shadow-2xl transition-transform duration-200 max-h-[85vh] md:max-h-[90vh] overflow-y-auto scrollbar-thin relative ${
-            isOpen ? 'scale-100 translate-y-0' : 'scale-95 translate-y-2'
+          className={`w-full rounded-sm border border-[#DDDCD4] bg-[#F2F1EC] p-6 md:p-8 shadow-2xl transition-premium-modal max-h-[85vh] md:max-h-[90vh] overflow-y-auto scrollbar-thin relative ${
+            isOpen ? 'scale-100 translate-y-0 opacity-100' : 'scale-95 translate-y-4 opacity-0'
           }`}
           role="dialog"
           aria-modal="true"

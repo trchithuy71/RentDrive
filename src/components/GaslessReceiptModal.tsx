@@ -1,19 +1,36 @@
 'use client';
 
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { useCircleApp } from '@/contexts/CircleAppContext';
 import { X, CheckCircle, ExternalLink, ShieldCheck, Zap } from 'lucide-react';
 import { useAccount } from 'wagmi';
 
 export default function GaslessReceiptModal() {
-  const { address } = useAccount();
+  const address = useAccount().address;
   const {
     receiptModalOpen,
     setReceiptModalOpen,
     receiptData
   } = useCircleApp();
 
-  if (!receiptModalOpen || !receiptData) return null;
+  const [isRendered, setIsRendered] = useState(false);
+  const [isOpen, setIsOpen] = useState(false);
+
+  useEffect(() => {
+    if (receiptModalOpen && receiptData) {
+      setIsRendered(true);
+      const frame = requestAnimationFrame(() => {
+        setIsOpen(true);
+      });
+      return () => cancelAnimationFrame(frame);
+    } else {
+      setIsOpen(false);
+      const timeout = setTimeout(() => setIsRendered(false), 300);
+      return () => clearTimeout(timeout);
+    }
+  }, [receiptModalOpen, receiptData]);
+
+  if (!isRendered || !receiptData) return null;
 
   const handleClose = () => {
     setReceiptModalOpen(false);
@@ -24,15 +41,15 @@ export default function GaslessReceiptModal() {
     : '';
 
   return (
-    <div className="fixed inset-0 z-[110] flex items-center justify-center p-4">
+    <div className={`fixed inset-0 z-[110] flex items-center justify-center p-4 transition-premium-modal ${isOpen ? 'opacity-100' : 'opacity-0 pointer-events-none'}`}>
       {/* Backdrop */}
       <div 
-        className="absolute inset-0 bg-[#1C2B3C]/50 backdrop-blur-sm transition-opacity duration-300"
+        className="absolute inset-0 bg-[#1C2B3C]/50 backdrop-blur-sm"
         onClick={handleClose}
       />
       
       {/* Modal Card */}
-      <div className="relative w-full max-w-md overflow-hidden rounded-sm border border-[#E0DDD5] bg-[#F2F1EC] text-[#1C2B3C] shadow-2xl transition-all duration-300 transform scale-100 flex flex-col">
+      <div className={`relative w-full max-w-md overflow-hidden rounded-sm border border-[#E0DDD5] bg-[#F2F1EC] text-[#1C2B3C] shadow-2xl transition-premium-modal flex flex-col ${isOpen ? 'scale-100 translate-y-0 opacity-100' : 'scale-95 translate-y-4 opacity-0'}`}>
         
         {/* Header */}
         <div className="flex items-center justify-between border-b border-[#E0DDD5] px-6 py-4.5 bg-gradient-to-r from-[#1C2B3C]/5 to-[#2F855A]/5">

@@ -23,7 +23,7 @@ export default function DocsPage() {
   ];
 
   return (
-    <div className="mx-auto max-w-7xl px-6 py-10">
+    <div className="mx-auto max-w-7xl px-6 py-10 animate-fade-in">
       <Breadcrumbs items={[
         { label: 'Home', url: '/' },
         { label: 'Docs', url: '/docs' }

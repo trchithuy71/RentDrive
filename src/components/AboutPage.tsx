@@ -25,7 +25,7 @@ export default function AboutPage() {
   ];
 
   return (
-    <div className="mx-auto max-w-5xl px-6 py-10 space-y-16">
+    <div className="mx-auto max-w-5xl px-6 py-10 space-y-16 animate-fade-in">
       <Breadcrumbs items={[
         { label: 'Home', url: '/' },
         { label: 'About', url: '/about' }
