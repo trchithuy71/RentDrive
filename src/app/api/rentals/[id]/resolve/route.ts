@@ -27,9 +27,9 @@ export async function POST(
     }
 
     // 2. Push dispute resolution on-chain
-    // Convert to integers / USDC format for Solidity (18 decimals on Arc Testnet)
-    const ownerPayout18 = BigInt(Math.round(Number(payoutToOwner) * 1000000)) * BigInt("1000000000000");
-    const renterRefund18 = BigInt(Math.round(Number(refundToRenter) * 1000000)) * BigInt("1000000000000");
+    // Convert to integers / USDC format for Solidity (6 decimals on Arc Testnet)
+    const ownerPayout18 = BigInt(Math.round(Number(payoutToOwner) * 1000000));
+    const renterRefund18 = BigInt(Math.round(Number(refundToRenter) * 1000000));
 
     console.log(`[Dispute Resolver] Resolving dispute on-chain for Rental #${rentalId}...`);
     const chainRes = await resolveDisputeOnChain(rentalId, ownerPayout18, renterRefund18);

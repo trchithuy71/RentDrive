@@ -379,9 +379,9 @@ export async function startRentalOnBehalfOnChain(
     }
 
     const tokenAddress = USDC_TOKEN_ADDRESS as Address;
-    const totalAmount = BigInt(Math.round((depositAmount + premiumAmount) * 1000000)) * BigInt("1000000000000");
+    const totalAmount = BigInt(Math.round((depositAmount + premiumAmount) * 1000000));
 
-    console.log(`[Relayer] Approving ${totalAmount.toString()} micro-USDC (18 decimals) for RentDrive contract...`);
+    console.log(`[Relayer] Approving ${totalAmount.toString()} micro-USDC (6 decimals) for RentDrive contract...`);
     const { request: approveReq } = await publicClient.simulateContract({
       address: tokenAddress,
       abi: erc20ApproveAbi,

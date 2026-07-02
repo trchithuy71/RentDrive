@@ -16,7 +16,7 @@ export const CURRENCY_CONFIG = {
   USDC: {
     symbol: 'USDC',
     name: 'USD Coin',
-    decimals: 18,
+    decimals: 6,
     address: '0x3600000000000000000000000000000000000000',
     icon: '$',
     color: '#2775CA',
@@ -26,7 +26,7 @@ export const CURRENCY_CONFIG = {
   EURC: {
     symbol: 'EURC',
     name: 'Euro Coin',
-    decimals: 18,
+    decimals: 6,
     address: '0x89B50855Aa3bE2F677cD6303Cec089B5F319D72a',
     icon: '€',
     color: '#1A47B8',
