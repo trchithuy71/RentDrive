@@ -526,9 +526,10 @@ export default function OracleRegistryManager() {
                   required
                   value={oracleAddress}
                   onChange={(e) => setOracleAddress(e.target.value)}
-                  placeholder="0x..."
-                  className="w-full rounded-sm border border-[#DDDCD4] bg-white px-3.5 py-2 text-xs text-[#1C2B3C] font-mono focus:border-[#1C2B3C] focus:outline-none"
+                  placeholder="e.g. 0x71C...3A9 (EVM Address)"
+                  className="w-full rounded-sm border border-[#DDDCD4] bg-white px-3.5 py-2 text-xs text-[#1C2B3C] font-mono focus:border-[#1C2B3C] focus:outline-none form-focus-ring"
                 />
+                <span className="text-[9px] text-[#718096] font-semibold mt-1 block">💡 The hardware device's automated blockchain account address.</span>
               </div>
               
               <div>
@@ -538,9 +539,10 @@ export default function OracleRegistryManager() {
                   required
                   value={agentName}
                   onChange={(e) => setAgentName(e.target.value)}
-                  placeholder="RentDrive AI Oracle Node 1"
-                  className="w-full rounded-sm border border-[#DDDCD4] bg-white px-3.5 py-2 text-xs text-[#1C2B3C] font-semibold focus:border-[#1C2B3C] focus:outline-none"
+                  placeholder="e.g. Hanoi Telematics Node 1"
+                  className="w-full rounded-sm border border-[#DDDCD4] bg-white px-3.5 py-2 text-xs text-[#1C2B3C] font-semibold focus:border-[#1C2B3C] focus:outline-none form-focus-ring"
                 />
+                <span className="text-[9px] text-[#718096] font-semibold mt-1 block">💡 A friendly name used to identify this oracle node on-chain.</span>
               </div>
 
               <div>
@@ -549,9 +551,10 @@ export default function OracleRegistryManager() {
                   type="text"
                   value={agentDesc}
                   onChange={(e) => setAgentDesc(e.target.value)}
-                  placeholder="Hanoi IoT telemetry validator node"
-                  className="w-full rounded-sm border border-[#DDDCD4] bg-white px-3.5 py-2 text-xs text-[#1C2B3C] font-semibold focus:border-[#1C2B3C] focus:outline-none"
+                  placeholder="e.g. Hanoi IoT telemetry validator node"
+                  className="w-full rounded-sm border border-[#DDDCD4] bg-white px-3.5 py-2 text-xs text-[#1C2B3C] font-semibold focus:border-[#1C2B3C] focus:outline-none form-focus-ring"
                 />
+                <span className="text-[9px] text-[#718096] font-semibold mt-1 block">💡 What physical region or subset of vehicles this node validates.</span>
               </div>
 
               <div className="grid grid-cols-2 gap-3">
@@ -562,8 +565,10 @@ export default function OracleRegistryManager() {
                     required
                     value={agentVersion}
                     onChange={(e) => setAgentVersion(e.target.value)}
-                    className="w-full rounded-sm border border-[#DDDCD4] bg-white px-3.5 py-2 text-xs text-[#1C2B3C] font-semibold focus:border-[#1C2B3C] focus:outline-none"
+                    placeholder="e.g. 1.0.0"
+                    className="w-full rounded-sm border border-[#DDDCD4] bg-white px-3.5 py-2 text-xs text-[#1C2B3C] font-semibold focus:border-[#1C2B3C] focus:outline-none form-focus-ring"
                   />
+                  <span className="text-[9px] text-[#718096] font-semibold mt-1 block">💡 Node daemon version.</span>
                 </div>
                 <div>
                   <label className="block text-[8.5px] text-[#718096] font-bold uppercase tracking-widest mb-1">CAPABILITIES</label>
@@ -572,8 +577,10 @@ export default function OracleRegistryManager() {
                     required
                     value={agentCapabilities}
                     onChange={(e) => setAgentCapabilities(e.target.value)}
-                    className="w-full rounded-sm border border-[#DDDCD4] bg-white px-3.5 py-2 text-xs text-[#1C2B3C] font-semibold focus:border-[#1C2B3C] focus:outline-none"
+                    placeholder="e.g. telemetry_validation, crash_sensor_readings"
+                    className="w-full rounded-sm border border-[#DDDCD4] bg-white px-3.5 py-2 text-xs text-[#1C2B3C] font-semibold focus:border-[#1C2B3C] focus:outline-none form-focus-ring"
                   />
+                  <span className="text-[9px] text-[#718096] font-semibold mt-1 block">💡 Comma-separated list of validation triggers.</span>
                 </div>
               </div>
 
@@ -584,8 +591,10 @@ export default function OracleRegistryManager() {
                   required
                   value={agentMcp}
                   onChange={(e) => setAgentMcp(e.target.value)}
-                  className="w-full rounded-sm border border-[#DDDCD4] bg-white px-3.5 py-2 text-xs text-[#1C2B3C] font-mono focus:border-[#1C2B3C] focus:outline-none"
+                  placeholder="e.g. https://agent.rentdrive.io/mcp"
+                  className="w-full rounded-sm border border-[#DDDCD4] bg-white px-3.5 py-2 text-xs text-[#1C2B3C] font-mono focus:border-[#1C2B3C] focus:outline-none form-focus-ring"
                 />
+                <span className="text-[9px] text-[#718096] font-semibold mt-1 block">💡 The Model Context Protocol URL used by AI Agent OS.</span>
               </div>
 
               <button
@@ -614,9 +623,10 @@ export default function OracleRegistryManager() {
                   required
                   value={addAddress}
                   onChange={(e) => setAddAddress(e.target.value)}
-                  placeholder="0x..."
-                  className="w-full rounded-sm border border-[#DDDCD4] bg-white px-3.5 py-2 text-xs text-[#1C2B3C] font-mono focus:border-[#1C2B3C] focus:outline-none"
+                  placeholder="e.g. 0x71C...3A9 (EVM Address)"
+                  className="w-full rounded-sm border border-[#DDDCD4] bg-white px-3.5 py-2 text-xs text-[#1C2B3C] font-mono focus:border-[#1C2B3C] focus:outline-none form-focus-ring"
                 />
+                <span className="text-[9px] text-[#718096] font-semibold mt-1 block">💡 Address of the registered node to grant voting rights.</span>
               </div>
               
               <div>
@@ -628,8 +638,10 @@ export default function OracleRegistryManager() {
                   max={10}
                   value={addWeight}
                   onChange={(e) => setAddWeight(e.target.value)}
-                  className="w-full rounded-sm border border-[#DDDCD4] bg-white px-3.5 py-2 text-xs text-[#1C2B3C] font-semibold focus:border-[#1C2B3C] focus:outline-none"
+                  placeholder="e.g. 1"
+                  className="w-full rounded-sm border border-[#DDDCD4] bg-white px-3.5 py-2 text-xs text-[#1C2B3C] font-semibold focus:border-[#1C2B3C] focus:outline-none form-focus-ring"
                 />
+                <span className="text-[9px] text-[#718096] font-semibold mt-1 block">💡 Consensus vote weight (between 1 and 10 shares).</span>
               </div>
 
               <button

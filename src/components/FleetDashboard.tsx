@@ -315,7 +315,7 @@ export default function FleetDashboard() {
       
       {/* Aggregate Stats Row */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
-        <div className="bg-white border border-[#DDDCD4] rounded-sm p-6 flex flex-col justify-between">
+        <div className="bg-white border border-[#DDDCD4] rounded-sm p-6 flex flex-col justify-between premium-hover-card">
           <div>
             <span className="text-[8px] font-black text-[#718096] uppercase tracking-widest block">Total Fleet Size</span>
             <span className="text-3xl font-black text-[#1C2B3C] block mt-2">{analytics.totalVehicles} Vehicles</span>
@@ -326,7 +326,7 @@ export default function FleetDashboard() {
           </div>
         </div>
 
-        <div className="bg-white border border-[#DDDCD4] rounded-sm p-6 flex flex-col justify-between">
+        <div className="bg-white border border-[#DDDCD4] rounded-sm p-6 flex flex-col justify-between premium-hover-card">
           <div>
             <span className="text-[8px] font-black text-[#718096] uppercase tracking-widest block">Active Leases</span>
             <span className="text-3xl font-black text-[#1C2B3C] block mt-2">{analytics.activeRentals} Active</span>
@@ -337,7 +337,7 @@ export default function FleetDashboard() {
           </div>
         </div>
 
-        <div className="bg-white border border-[#DDDCD4] rounded-sm p-6 flex flex-col justify-between">
+        <div className="bg-white border border-[#DDDCD4] rounded-sm p-6 flex flex-col justify-between premium-hover-card">
           <div>
             <span className="text-[8px] font-black text-[#718096] uppercase tracking-widest block">Combined Escrow</span>
             <div className="mt-2 space-y-1 font-mono">
@@ -355,7 +355,7 @@ export default function FleetDashboard() {
           </div>
         </div>
 
-        <div className="bg-white border border-[#DDDCD4] rounded-sm p-6 flex flex-col justify-between">
+        <div className="bg-white border border-[#DDDCD4] rounded-sm p-6 flex flex-col justify-between premium-hover-card">
           <div>
             <span className="text-[8px] font-black text-[#718096] uppercase tracking-widest block">Average Rating</span>
             <div className="flex items-center gap-1.5 mt-2.5">

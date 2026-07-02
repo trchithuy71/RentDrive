@@ -150,11 +150,11 @@ export default function OwnerPortal({ activeTab }: OwnerPortalProps) {
   });
 
   const formattedEarnings = onChainEarnings
-    ? Number(formatUnits(onChainEarnings as bigint, 18)).toFixed(2)
+    ? Number(formatUnits(onChainEarnings as bigint, 6)).toFixed(2)
     : '0.00';
 
   const formattedUsdcBalance = usdcBalance
-    ? Number(formatUnits(usdcBalance as bigint, 18)).toFixed(2)
+    ? Number(formatUnits(usdcBalance as bigint, 6)).toFixed(2)
     : '0.00';
 
   const { subscribeToEvent } = useNotifications();
@@ -534,7 +534,7 @@ export default function OwnerPortal({ activeTab }: OwnerPortalProps) {
 
   if (!isConnected) {
     return (
-      <div className="mx-auto max-w-lg px-6 py-24 text-center">
+      <div className="mx-auto max-w-lg px-6 py-24 text-center animate-fade-in">
         <div className="rounded-sm border border-[#E0DDD5] bg-white p-10 shadow-sm">
           <Landmark className="mx-auto h-12 w-12 text-[#5A6573] mb-5" />
           <h2 className="text-sm font-black tracking-widest text-[#1C2B3C] uppercase mb-3">OWNER PORTAL LOCKED</h2>
@@ -547,7 +547,7 @@ export default function OwnerPortal({ activeTab }: OwnerPortalProps) {
   }
 
   return (
-    <div className="mx-auto max-w-7xl px-6 py-10">
+    <div className="mx-auto max-w-7xl px-6 py-10 animate-fade-in">
       
       {/* Operator Console Header with view toggles */}
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-8 border-b border-[#E0DDD5] pb-5">
@@ -675,19 +675,19 @@ export default function OwnerPortal({ activeTab }: OwnerPortalProps) {
                 <div>
                   <span className="block text-[#718096] font-bold text-[9px] tracking-wider uppercase mb-1">Pool Balance</span>
                   <span className="text-[#1C2B3C] font-black text-lg">
-                    {poolBalance !== undefined ? Number(formatUnits(poolBalance as bigint, 18)).toFixed(2) : '0.00'} USDC
+                    {poolBalance !== undefined ? Number(formatUnits(poolBalance as bigint, 6)).toFixed(2) : '0.00'} USDC
                   </span>
                 </div>
                 <div>
                   <span className="block text-[#718096] font-bold text-[9px] tracking-wider uppercase mb-1">Total Premiums</span>
                   <span className="text-[#1C2B3C] font-extrabold text-lg">
-                    {totalPremiums !== undefined ? Number(formatUnits(totalPremiums as bigint, 18)).toFixed(2) : '0.00'} USDC
+                    {totalPremiums !== undefined ? Number(formatUnits(totalPremiums as bigint, 6)).toFixed(2) : '0.00'} USDC
                   </span>
                 </div>
                 <div>
                   <span className="block text-[#718096] font-bold text-[9px] tracking-wider uppercase mb-1">Minimum Reserve</span>
                   <span className="text-amber-700 font-extrabold text-lg">
-                    {totalPremiums !== undefined ? (Number(formatUnits(totalPremiums as bigint, 18)) * 0.1).toFixed(2) : '0.00'} USDC
+                    {totalPremiums !== undefined ? (Number(formatUnits(totalPremiums as bigint, 6)) * 0.1).toFixed(2) : '0.00'} USDC
                   </span>
                 </div>
               </div>
@@ -729,11 +729,12 @@ export default function OwnerPortal({ activeTab }: OwnerPortalProps) {
                     </p>
                     <input
                       type="number"
-                      placeholder="0.00 USDC"
+                      placeholder="e.g. 50.00"
                       value={withdrawAmount}
                       onChange={(e) => setWithdrawAmount(e.target.value)}
-                      className="w-full rounded-sm border border-[#DDDCD4] bg-white px-3 py-2 text-xs text-[#1C2B3C] font-semibold focus:border-[#1C2B3C] focus:outline-none placeholder-[#A0AEC0] mb-4"
+                      className="w-full rounded-sm border border-[#DDDCD4] bg-white px-3 py-2 text-xs text-[#1C2B3C] font-semibold focus:border-[#1C2B3C] focus:outline-none placeholder-[#A0AEC0] mb-2 form-focus-ring"
                     />
+                    <span className="block text-[9px] text-[#718096] font-semibold mb-4">💡 Enter amount in USDC. Will fail if reserve falls below the 10% requirement.</span>
                   </div>
                   <button
                     onClick={handleWithdrawPool}
@@ -771,14 +772,15 @@ export default function OwnerPortal({ activeTab }: OwnerPortalProps) {
                         </div>
                       </div>
 
-                      <div className="grid grid-cols-2 gap-4 mb-6">
+                      <div className="grid grid-cols-2 gap-4 mb-3">
                         <div>
                           <label className="block text-[9px] text-[#718096] font-bold uppercase tracking-widest mb-1.5">Owner Payout (USDC)</label>
                           <input
                             type="number"
                             value={payoutOwner}
                             onChange={(e) => setPayoutOwner(e.target.value)}
-                            className="w-full rounded-sm border border-[#DDDCD4] bg-white px-4 py-2.5 text-xs text-[#1C2B3C] font-bold focus:border-[#1C2B3C] focus:outline-none"
+                            placeholder="e.g. 150.00"
+                            className="w-full rounded-sm border border-[#DDDCD4] bg-white px-4 py-2.5 text-xs text-[#1C2B3C] font-bold focus:border-[#1C2B3C] focus:outline-none form-focus-ring"
                           />
                         </div>
                         <div>
@@ -787,10 +789,14 @@ export default function OwnerPortal({ activeTab }: OwnerPortalProps) {
                             type="number"
                             value={refundRenter}
                             onChange={(e) => setRefundRenter(e.target.value)}
-                            className="w-full rounded-sm border border-[#DDDCD4] bg-white px-4 py-2.5 text-xs text-[#1C2B3C] font-bold focus:border-[#1C2B3C] focus:outline-none"
+                            placeholder="e.g. 50.00"
+                            className="w-full rounded-sm border border-[#DDDCD4] bg-white px-4 py-2.5 text-xs text-[#1C2B3C] font-bold focus:border-[#1C2B3C] focus:outline-none form-focus-ring"
                           />
                         </div>
                       </div>
+                      <p className="text-[9px] text-amber-800 font-semibold mb-4 leading-normal bg-amber-50 border border-amber-200 p-2.5 rounded-sm">
+                        ⚠️ The sum of Owner Payout and Renter Refund must exactly equal the Locked Collateral amount ({rental.escrow_balance} USDC).
+                      </p>
 
                       <button
                         onClick={() => handleResolveDispute(rental)}
@@ -910,9 +916,10 @@ export default function OwnerPortal({ activeTab }: OwnerPortalProps) {
                 required
                 value={model}
                 onChange={(e) => setModel(e.target.value)}
-                placeholder="TESLA MODEL S (2025)"
-                className="w-full rounded-sm border border-[#DDDCD4] bg-white px-4 py-2.5 text-xs text-[#1C2B3C] font-semibold focus:border-[#1C2B3C] focus:outline-none"
+                placeholder="e.g. Tesla Model Y (2026)"
+                className="w-full rounded-sm border border-[#DDDCD4] bg-white px-4 py-2.5 text-xs text-[#1C2B3C] font-semibold focus:border-[#1C2B3C] focus:outline-none form-focus-ring"
               />
+              <span className="text-[9px] text-[#718096] font-semibold mt-1 block">💡 Specify the manufacturer name, model, and year of manufacture.</span>
             </div>
 
             <div className="grid grid-cols-2 gap-4">
@@ -923,9 +930,10 @@ export default function OwnerPortal({ activeTab }: OwnerPortalProps) {
                   required
                   value={plateNumber}
                   onChange={(e) => setPlateNumber(e.target.value)}
-                  placeholder="29A-999.99"
-                  className="w-full rounded-sm border border-[#DDDCD4] bg-white px-4 py-2.5 text-xs text-[#1C2B3C] font-semibold focus:border-[#1C2B3C] focus:outline-none"
+                  placeholder="e.g. 29A-123.45"
+                  className="w-full rounded-sm border border-[#DDDCD4] bg-white px-4 py-2.5 text-xs text-[#1C2B3C] font-semibold focus:border-[#1C2B3C] focus:outline-none form-focus-ring"
                 />
+                <span className="text-[9px] text-[#718096] font-semibold mt-1 block">💡 Official registration plate format.</span>
               </div>
               <div>
                 <label className="block text-[9px] text-[#718096] font-bold uppercase tracking-widest mb-1.5">ESCROW COLLATERAL ({acceptedCurrency})</label>
@@ -934,9 +942,10 @@ export default function OwnerPortal({ activeTab }: OwnerPortalProps) {
                   required
                   value={deposit}
                   onChange={(e) => setDeposit(e.target.value)}
-                  placeholder="200.00"
-                  className="w-full rounded-sm border border-[#DDDCD4] bg-white px-4 py-2.5 text-xs text-[#1C2B3C] font-semibold focus:border-[#1C2B3C] focus:outline-none"
+                  placeholder="e.g. 150.00"
+                  className="w-full rounded-sm border border-[#DDDCD4] bg-white px-4 py-2.5 text-xs text-[#1C2B3C] font-semibold focus:border-[#1C2B3C] focus:outline-none form-focus-ring"
                 />
+                <span className="text-[9px] text-[#718096] font-semibold mt-1 block">💡 Collateral security deposit locked in escrow.</span>
               </div>
             </div>
 
@@ -946,29 +955,34 @@ export default function OwnerPortal({ activeTab }: OwnerPortalProps) {
                 type="text"
                 value={imageUrl}
                 onChange={(e) => setImageUrl(e.target.value)}
-                placeholder="https://images.unsplash.com/..."
-                className="w-full rounded-sm border border-[#DDDCD4] bg-white px-4 py-2.5 text-xs text-[#1C2B3C] font-semibold focus:border-[#1C2B3C] focus:outline-none"
+                placeholder="e.g. https://images.unsplash.com/photo-xxxxxxxxxxxxx"
+                className="w-full rounded-sm border border-[#DDDCD4] bg-white px-4 py-2.5 text-xs text-[#1C2B3C] font-semibold focus:border-[#1C2B3C] focus:outline-none form-focus-ring"
               />
+              <span className="text-[9px] text-[#718096] font-semibold mt-1 block">💡 Publicly accessible HTTPS link to a vehicle photo asset.</span>
             </div>
 
             <div className="grid grid-cols-2 gap-4">
               <div>
-                <label className="block text-[9px] text-[#718096] font-bold uppercase tracking-widest mb-1.5">BASE RATE ($/HR)</label>
+                <label className="block text-[9px] text-[#718096] font-bold uppercase tracking-widest mb-1.5">BASE RATE ({acceptedCurrency}/HR)</label>
                 <input
                   type="number"
                   value={baseRate}
                   onChange={(e) => setBaseRate(e.target.value)}
-                  className="w-full rounded-sm border border-[#DDDCD4] bg-white px-4 py-2.5 text-xs text-[#1C2B3C] font-semibold focus:border-[#1C2B3C] focus:outline-none"
+                  placeholder="e.g. 1.50"
+                  className="w-full rounded-sm border border-[#DDDCD4] bg-white px-4 py-2.5 text-xs text-[#1C2B3C] font-semibold focus:border-[#1C2B3C] focus:outline-none form-focus-ring"
                 />
+                <span className="text-[9px] text-[#718096] font-semibold mt-1 block">💡 Hourly charge rate while rental is active.</span>
               </div>
               <div>
-                <label className="block text-[9px] text-[#718096] font-bold uppercase tracking-widest mb-1.5">DISTANCE RATE ($/KM)</label>
+                <label className="block text-[9px] text-[#718096] font-bold uppercase tracking-widest mb-1.5">DISTANCE RATE ({acceptedCurrency}/KM)</label>
                 <input
                   type="number"
                   value={ratePerKm}
                   onChange={(e) => setRatePerKm(e.target.value)}
-                  className="w-full rounded-sm border border-[#DDDCD4] bg-white px-4 py-2.5 text-xs text-[#1C2B3C] font-semibold focus:border-[#1C2B3C] focus:outline-none"
+                  placeholder="e.g. 0.25"
+                  className="w-full rounded-sm border border-[#DDDCD4] bg-white px-4 py-2.5 text-xs text-[#1C2B3C] font-semibold focus:border-[#1C2B3C] focus:outline-none form-focus-ring"
                 />
+                <span className="text-[9px] text-[#718096] font-semibold mt-1 block">💡 Odometer-gated micro-charge rate per kilometer.</span>
               </div>
             </div>
 
@@ -979,17 +993,21 @@ export default function OwnerPortal({ activeTab }: OwnerPortalProps) {
                   type="number"
                   value={speedLimit}
                   onChange={(e) => setSpeedLimit(e.target.value)}
-                  className="w-full rounded-sm border border-[#DDDCD4] bg-white px-4 py-2.5 text-xs text-[#1C2B3C] font-semibold focus:border-[#1C2B3C] focus:outline-none"
+                  placeholder="e.g. 100"
+                  className="w-full rounded-sm border border-[#DDDCD4] bg-white px-4 py-2.5 text-xs text-[#1C2B3C] font-semibold focus:border-[#1C2B3C] focus:outline-none form-focus-ring"
                 />
+                <span className="text-[9px] text-[#718096] font-semibold mt-1 block">💡 Maximum allowed telemetry speed limit.</span>
               </div>
               <div>
-                <label className="block text-[9px] text-[#718096] font-bold uppercase tracking-widest mb-1.5">VIOLATION PENALTY ($)</label>
+                <label className="block text-[9px] text-[#718096] font-bold uppercase tracking-widest mb-1.5">VIOLATION PENALTY ({acceptedCurrency})</label>
                 <input
                   type="number"
                   value={speedPenalty}
                   onChange={(e) => setSpeedPenalty(e.target.value)}
-                  className="w-full rounded-sm border border-[#DDDCD4] bg-white px-4 py-2.5 text-xs text-[#1C2B3C] font-semibold focus:border-[#1C2B3C] focus:outline-none"
+                  placeholder="e.g. 5.00"
+                  className="w-full rounded-sm border border-[#DDDCD4] bg-white px-4 py-2.5 text-xs text-[#1C2B3C] font-semibold focus:border-[#1C2B3C] focus:outline-none form-focus-ring"
                 />
+                <span className="text-[9px] text-[#718096] font-semibold mt-1 block">💡 Penalty deducted from escrow per speeding violation.</span>
               </div>
             </div>
 
@@ -1005,8 +1023,10 @@ export default function OwnerPortal({ activeTab }: OwnerPortalProps) {
                     required
                     value={centerLat}
                     onChange={(e) => setCenterLat(e.target.value)}
-                    className="w-full rounded-sm border border-[#DDDCD4] bg-white px-4 py-2.5 text-xs text-[#1C2B3C] font-semibold focus:border-[#1C2B3C] focus:outline-none"
+                    placeholder="e.g. 21.028511"
+                    className="w-full rounded-sm border border-[#DDDCD4] bg-white px-4 py-2.5 text-xs text-[#1C2B3C] font-semibold focus:border-[#1C2B3C] focus:outline-none form-focus-ring"
                   />
+                  <span className="text-[9px] text-[#718096] font-semibold mt-1 block">💡 Lat coordinate center (e.g. 21.0285).</span>
                 </div>
                 <div>
                   <label className="block text-[9px] text-[#718096] font-bold uppercase tracking-widest mb-1.5">GEOFENCE LONGITUDE</label>
@@ -1016,8 +1036,10 @@ export default function OwnerPortal({ activeTab }: OwnerPortalProps) {
                     required
                     value={centerLng}
                     onChange={(e) => setCenterLng(e.target.value)}
-                    className="w-full rounded-sm border border-[#DDDCD4] bg-white px-4 py-2.5 text-xs text-[#1C2B3C] font-semibold focus:border-[#1C2B3C] focus:outline-none"
+                    placeholder="e.g. 105.804817"
+                    className="w-full rounded-sm border border-[#DDDCD4] bg-white px-4 py-2.5 text-xs text-[#1C2B3C] font-semibold focus:border-[#1C2B3C] focus:outline-none form-focus-ring"
                   />
+                  <span className="text-[9px] text-[#718096] font-semibold mt-1 block">💡 Lng coordinate center (e.g. 105.8048).</span>
                 </div>
               </div>
               <div className="grid grid-cols-2 gap-4">
@@ -1028,8 +1050,10 @@ export default function OwnerPortal({ activeTab }: OwnerPortalProps) {
                     required
                     value={radiusMeters}
                     onChange={(e) => setRadiusMeters(e.target.value)}
-                    className="w-full rounded-sm border border-[#DDDCD4] bg-white px-4 py-2.5 text-xs text-[#1C2B3C] font-semibold focus:border-[#1C2B3C] focus:outline-none"
+                    placeholder="e.g. 5000"
+                    className="w-full rounded-sm border border-[#DDDCD4] bg-white px-4 py-2.5 text-xs text-[#1C2B3C] font-semibold focus:border-[#1C2B3C] focus:outline-none form-focus-ring"
                   />
+                  <span className="text-[9px] text-[#718096] font-semibold mt-1 block">💡 Permitted driving radius in meters from center.</span>
                 </div>
                 <div>
                   <label className="block text-[9px] text-[#718096] font-bold uppercase tracking-widest mb-1.5">GEOFENCE PENALTY (USDC)</label>
@@ -1038,8 +1062,10 @@ export default function OwnerPortal({ activeTab }: OwnerPortalProps) {
                     required
                     value={geofencePenalty}
                     onChange={(e) => setGeofencePenalty(e.target.value)}
-                    className="w-full rounded-sm border border-[#DDDCD4] bg-white px-4 py-2.5 text-xs text-[#1C2B3C] font-semibold focus:border-[#1C2B3C] focus:outline-none"
+                    placeholder="e.g. 10.00"
+                    className="w-full rounded-sm border border-[#DDDCD4] bg-white px-4 py-2.5 text-xs text-[#1C2B3C] font-semibold focus:border-[#1C2B3C] focus:outline-none form-focus-ring"
                   />
+                  <span className="text-[9px] text-[#718096] font-semibold mt-1 block">💡 Penalty deducted if vehicle exits radius.</span>
                 </div>
               </div>
             </div>

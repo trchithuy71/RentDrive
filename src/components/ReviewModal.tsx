@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useAccount, usePublicClient } from 'wagmi';
 import { Address } from 'viem';
 import { X, MessageSquare, Zap } from 'lucide-react';
@@ -26,6 +26,12 @@ export default function ReviewModal({
   const [rating, setRating] = useState(5);
   const [comment, setComment] = useState('');
   const [submitting, setSubmitting] = useState(false);
+  const [mounted, setMounted] = useState(false);
+  
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
   const { gaslessEnabled } = useCircleApp();
   const { writeContractAsync } = useGaslessWriteContract();
   const publicClient = usePublicClient();
@@ -110,8 +116,8 @@ export default function ReviewModal({
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-[#1C2B3C]/50 p-4 backdrop-blur-sm">
-      <div className="w-full max-w-md rounded-sm border border-[#DDDCD4] bg-[#F2F1EC] p-6 shadow-2xl relative animate-in fade-in zoom-in-95 duration-200">
+    <div className={`fixed inset-0 z-50 flex items-center justify-center bg-[#1C2B3C]/50 p-4 backdrop-blur-sm transition-premium-modal ${mounted ? 'opacity-100' : 'opacity-0'}`}>
+      <div className={`w-full max-w-md rounded-sm border border-[#DDDCD4] bg-[#F2F1EC] p-6 shadow-2xl relative transition-premium-modal ${mounted ? 'scale-100 translate-y-0 opacity-100' : 'scale-95 translate-y-4 opacity-0'}`}>
         <button
           onClick={onClose}
           className="absolute top-4 right-4 text-[#5A6573] hover:text-[#1C2B3C] transition-all"
@@ -150,9 +156,10 @@ export default function ReviewModal({
               rows={4}
               value={comment}
               onChange={(e) => setComment(e.target.value)}
-              placeholder="Provide a constructive review of the vehicle's condition, range, and general ownership experience..."
-              className="w-full rounded-sm border border-[#DDDCD4] bg-white px-4 py-2.5 text-xs text-[#1C2B3C] font-semibold focus:border-[#1C2B3C] focus:outline-none placeholder-[#A0AEC0]"
+              placeholder="e.g. The vehicle was in pristine condition, battery range was accurate, and the owner was highly responsive..."
+              className="w-full rounded-sm border border-[#DDDCD4] bg-white px-4 py-2.5 text-xs text-[#1C2B3C] font-semibold focus:border-[#1C2B3C] focus:outline-none placeholder-[#A0AEC0] form-focus-ring"
             />
+            <span className="text-[9px] text-[#718096] font-semibold mt-1 block">💡 Describe the vehicle's driving experience and overall condition.</span>
           </div>
 
           {gaslessEnabled && (

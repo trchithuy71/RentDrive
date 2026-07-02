@@ -176,7 +176,7 @@ export default function SwapConsole() {
   };
 
   return (
-    <div className="mx-auto max-w-lg px-6 py-10">
+    <div className="mx-auto max-w-lg px-6 py-10 animate-fade-in">
       
       {/* Header */}
       <div className="mb-8 border-b border-[#E0DDD5] pb-5">
@@ -197,12 +197,12 @@ export default function SwapConsole() {
             <span>Pay From (Token In)</span>
             <span>Balance: {formattedTokenInBalance} {fromToken}</span>
           </div>
-          <div className="relative rounded-sm border border-[#E0DDD5] bg-white p-3.5 flex items-center justify-between focus-within:border-[#1C2B3C] transition-all">
+          <div className="relative rounded-sm border border-[#E0DDD5] bg-white p-3.5 flex items-center justify-between focus-within:border-[#1C2B3C] transition-all form-focus-ring">
             <input
               type="number"
               value={amountIn}
               onChange={(e) => setAmountIn(e.target.value)}
-              placeholder="0.00"
+              placeholder="e.g. 10.00"
               disabled={swapping}
               className="bg-transparent text-lg font-black text-[#1C2B3C] outline-none w-2/3"
             />
@@ -216,6 +216,7 @@ export default function SwapConsole() {
               <CurrencyBadge currency={fromToken} size="md" />
             </div>
           </div>
+          <span className="text-[9px] text-[#718096] font-semibold mt-1 block">💡 Enter the volume of tokens you wish to swap.</span>
         </div>
 
         {/* Switch Button */}
@@ -246,6 +247,7 @@ export default function SwapConsole() {
             />
             <CurrencyBadge currency={toToken} size="md" />
           </div>
+          <span className="text-[9px] text-[#718096] font-semibold mt-1 block">💡 Output estimated in real-time according to Chainlink/Celo oracle.</span>
         </div>
 
         {/* FX rate display info */}
